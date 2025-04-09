@@ -1,5 +1,7 @@
 (ns myproject.views
-  (:require [manifest-edn.core :as manifest]))
+  (:require [manifest-edn.core :as manifest]
+            [reitit-extras.core :as reitit-extras]
+            [myproject.routes :as-alias routes]))
 
 (defn base
   "Base component for html page."
@@ -55,35 +57,43 @@
      "Delete"]]])
 
 (defn form-input
-  [{:keys [field-name field-type attrs]}]
+  [{:keys [field-name field-type field-value attrs]}]
   [:div
    {:class ["flex" "flex-col"]}
    [:input (merge {:class ["w-full" "border" "border-gray-300" "rounded-md" "px-3" "py-2"]
                    :type field-type
                    :name field-name
+                   :value (or field-value "")
                    :placeholder (str "Enter " field-name)}
                   attrs)]])
 
 (defn form
-  []
+  [{:keys [router params]}]
   [:form
    {:id "form-create-movie"
-    :class ["border-t" "border-gray-200" "bg-gray-50" "p-6"]}
+    :class ["border-t" "border-gray-200" "bg-gray-50" "p-6"]
+    :hx-post (reitit-extras/get-route router ::routes/movie-list)
+    :hx-target "#form-create-movie"
+    :hx-swap "outerHTML"}
+   (reitit-extras/csrf-token-html)
    [:div {:class ["grid" "grid-cols-1" "md:grid-cols-4" "gap-4"]}
     (form-input {:field-name "title"
-                 :field-type "text"})
+                 :field-type "text"
+                 :field-value (:title params)})
     (form-input {:field-name "year"
                  :field-type "number"
-                 :attrs {:min 1888}})
+                 :attrs {:min 1888}
+                 :field-value (:year params)})
     (form-input {:field-name "director"
-                 :field-type "text"})
+                 :field-type "text"
+                 :field-value (:director params)})
     [:div {:class ["flex" "flex-col"]}
      [:button {:class ["bg-blue-600" "text-white" "rounded-md" "px-4" "py-2"
                        "hover:bg-blue-700" "cursor-pointer"]}
       "Create"]]]])
 
 (defn home-page
-  [{:keys [movies]}]
+  [{:keys [movies router]}]
   (base
     [:div {:id "content"
            :class ["container" "mx-auto" "p-6" "max-w-4xl"]}
@@ -107,4 +117,4 @@
                  :class ["bg-white" "divide-y" "divide-gray-200"]}
          (for [movie movies]
            (list-item {:movie movie}))]]]
-      (form)]]))
+      (form {:router router})]]))

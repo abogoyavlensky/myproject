@@ -1,5 +1,6 @@
 (ns myproject.handlers
   (:require [myproject.views :as views]
+            [myproject.queries :as queries]
             [reitit-extras.core :as reitit-extras]
             [ring.util.response :as response]))
 
@@ -11,12 +12,23 @@
         (response/status status-code))))
 
 (defn home-handler
-  [_]
-  (-> {:movies [{:title "Movie 1"
-                 :year 2023
-                 :director "Director 1"}
-                {:title "Movie 2"
-                 :year 2022
-                 :director "Director 2"}]}
+  [{:keys [context]
+    router :reitit.core/router}]
+  (-> {:router router
+       :movies (queries/get-movie-list (:db context))}
       (views/home-page)
       (reitit-extras/render-html)))
+
+(defn create-movie-handler
+  "Render a new table item with newly created movie."
+  [{router :reitit.core/router
+    :keys [context params]}]
+  (-> (list
+        (views/form {:router router})
+        [:template
+         [:tbody
+          {:hx-swap-oob "beforeend:#table-content"}
+          (views/list-item {:router router
+                            :movie (queries/create-movie (:db context) params)})]])
+      (reitit-extras/render-html)
+      (response/header "Content-Type" "text/html")))

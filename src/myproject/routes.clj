@@ -7,4 +7,8 @@
          :get {:handler handlers/home-handler}
          :responses {200 {:body string?}}}]
    ["/health" {:name ::health-check
-               :get {:handler (fn [_] (response/response "OK"))}}]])
+               :get {:handler (fn [_] (response/response "OK"))}}]
+   ["/movies"
+    ["" {:name ::movie-list
+         :post {:handler handlers/create-movie-handler
+                :responses {200 {:body string?}}}}]]])
