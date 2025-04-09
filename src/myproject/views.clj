@@ -42,24 +42,69 @@
      [:div {:class ["mx-auto" "text-center"]}
       [:h1 {:class ["text-5xl"]} text]]]))
 
-(def home-page
+(defn list-item
+  [{:keys [movie]}]
+  [:tr
+   [:td {:class ["px-6" "py-4" "text-gray-800"]} (:title movie)]
+   [:td {:class ["px-6" "py-4" "text-gray-800"]} (:year movie)]
+   [:td {:class ["px-6" "py-4" "text-gray-800"]} (:director movie)]
+   [:td {:class ["px-6" "py-4"]}
+    [:button
+     {:class ["text-red-400" "hover:bg-gray-50" "bg-white" "border"
+              "border-gray-300" "rounded-md" "px-3" "py-1" "cursor-pointer"]}
+     "Delete"]]])
+
+(defn form-input
+  [{:keys [field-name field-type attrs]}]
+  [:div
+   {:class ["flex" "flex-col"]}
+   [:input (merge {:class ["w-full" "border" "border-gray-300" "rounded-md" "px-3" "py-2"]
+                   :type field-type
+                   :name field-name
+                   :placeholder (str "Enter " field-name)}
+                  attrs)]])
+
+(defn form
+  []
+  [:form
+   {:id "form-create-movie"
+    :class ["border-t" "border-gray-200" "bg-gray-50" "p-6"]}
+   [:div {:class ["grid" "grid-cols-1" "md:grid-cols-4" "gap-4"]}
+    (form-input {:field-name "title"
+                 :field-type "text"})
+    (form-input {:field-name "year"
+                 :field-type "number"
+                 :attrs {:min 1888}})
+    (form-input {:field-name "director"
+                 :field-type "text"})
+    [:div {:class ["flex" "flex-col"]}
+     [:button {:class ["bg-blue-600" "text-white" "rounded-md" "px-4" "py-2"
+                       "hover:bg-blue-700" "cursor-pointer"]}
+      "Create"]]]])
+
+(defn home-page
+  [{:keys [movies]}]
   (base
-    ; ========= TODO: Update home page  ========================
-    [:div
-     {:class ["text-slate-800" "min-h-screen" "flex" "flex-col"]}
-     [:main {:class ["flex-grow" "flex" "items-center" "justify-center"]}
-      [:div {:class ["container" "mx-auto" "px-4" "max-w-4xl" "text-center"]}
-       [:h1 {:class ["text-6xl" "font-bold" "mb-6" "text-slate-900"]} "Welcome to "
-        [:span {:class ["bg-gradient-to-r" "from-emerald-400" "to-sky-400" "bg-clip-text" "text-transparent" "relative"]}
-         "Clojure Stack Lite"]]
-       [:p {:class ["text-2xl" "mb-10" "text-slate-600"]} "A lightweight, modern template to jumpstart your Clojure project"]
-       [:p {:class ["text-lg" "mb-12" "text-slate-500"]}
-        "To begin, modify the existing view in " [:code {:class ["bg-slate-100" "px-1" "rounded"]} "src/myproject/views/home.clj"]
-        " or add a new route in " [:code {:class ["bg-slate-100" "px-1" "rounded"]} "src/myproject/routes.clj"]
-        " and define a handler in " [:code {:class ["bg-slate-100" "px-1" "rounded"]} "src/myproject/handlers.clj"]]
-       [:div {:class ["mb-16"]}
-        [:a {:class ["bg-slate-900" "hover:bg-slate-800" "text-white" "font-medium" "py-3" "px-8" "rounded-lg" "transition-colors" "duration-200" "mr-4"]
-             :href "https://stack.bogoyavlensky.com/docs/lite/tutorial"
-             :target "_blank"} "Get Started"]]]]
-     [:footer {:class ["py-6" "text-center" "text-sm" "text-slate-500"]}
-      [:p "Made with ❤️ for the Clojure community"]]]))
+    [:div {:id "content"
+           :class ["container" "mx-auto" "p-6" "max-w-4xl"]}
+     [:div {:class ["mb-10" "flex" "justify-between" "items-center"]}
+      [:h1 {:class ["text-2xl" "font-semibold" "text-gray-800"]} "Movies Lite"]]
+     [:div {:class ["bg-white" "rounded-lg" "shadow-md" "overflow-hidden" "border"
+                    "border-gray-200"]}
+      [:div {:class ["overflow-x-auto"]}
+       [:table {:class ["min-w-full" "divide-y" "divide-gray-200"]}
+        [:thead {:class ["bg-white"]}
+         [:tr
+          [:th {:class ["px-6" "py-3" "text-left" "text-gray-500" "font-medium"]
+                :scope "col"} "Title"]
+          [:th {:class ["px-6" "py-3" "text-left" "text-gray-500" "font-medium"]
+                :scope "col"} "Year"]
+          [:th {:class ["px-6" "py-3" "text-left" "text-gray-500" "font-medium"]
+                :scope "col"} "Director"]
+          [:th {:class ["px-6" "py-3" "text-left" "text-gray-500" "font-medium"]
+                :scope "col"} "Actions"]]]
+        [:tbody {:id "table-content"
+                 :class ["bg-white" "divide-y" "divide-gray-200"]}
+         (for [movie movies]
+           (list-item {:movie movie}))]]]
+      (form)]]))

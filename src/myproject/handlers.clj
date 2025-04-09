@@ -12,4 +12,11 @@
 
 (defn home-handler
   [_]
-  (reitit-extras/render-html views/home-page))
+  (-> {:movies [{:title "Movie 1"
+                 :year 2023
+                 :director "Director 1"}
+                {:title "Movie 2"
+                 :year 2022
+                 :director "Director 2"}]}
+      (views/home-page)
+      (reitit-extras/render-html)))
