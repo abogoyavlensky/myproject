@@ -4,9 +4,9 @@
             [hickory.core :as hickory]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
-            [reitit-extras.tests :as reitit-extras]
             [myproject.server :as-alias server]
-            [myproject.test-utils :as test-utils]))
+            [myproject.test-utils :as test-utils]
+            [reitit-extras.tests :as reitit-extras]))
 
 (use-fixtures :once
   (ig-extras/with-system))

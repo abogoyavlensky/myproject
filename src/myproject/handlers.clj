@@ -1,7 +1,7 @@
 (ns myproject.handlers
-  (:require [reitit-extras.core :as reitit-extras]
-            [ring.util.response :as response]
-            [myproject.views :as views]))
+  (:require [myproject.views :as views]
+            [reitit-extras.core :as reitit-extras]
+            [ring.util.response :as response]))
 
 (defn default-handler
   [error-text status-code]

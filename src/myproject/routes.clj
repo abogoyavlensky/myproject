@@ -1,6 +1,6 @@
 (ns myproject.routes
-  (:require [ring.util.response :as response]
-            [myproject.handlers :as handlers]))
+  (:require [myproject.handlers :as handlers]
+            [ring.util.response :as response]))
 
 (def routes
   [["/" {:name ::home-page
