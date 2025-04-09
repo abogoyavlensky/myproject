@@ -45,7 +45,7 @@
       [:h1 {:class ["text-5xl"]} text]]]))
 
 (defn list-item
-  [{:keys [movie]}]
+  [{:keys [router movie]}]
   [:tr
    [:td {:class ["px-6" "py-4" "text-gray-800"]} (:title movie)]
    [:td {:class ["px-6" "py-4" "text-gray-800"]} (:year movie)]
@@ -53,7 +53,11 @@
    [:td {:class ["px-6" "py-4"]}
     [:button
      {:class ["text-red-400" "hover:bg-gray-50" "bg-white" "border"
-              "border-gray-300" "rounded-md" "px-3" "py-1" "cursor-pointer"]}
+              "border-gray-300" "rounded-md" "px-3" "py-1" "cursor-pointer"]
+      :hx-delete (reitit-extras/get-route router ::routes/movie-details {:path {:id (:id movie)}})
+      :hx-headers (reitit-extras/csrf-token-json)
+      :hx-target "closest tr"
+      :hx-swap "outerHTML"}
      "Delete"]]])
 
 (defn form-input
@@ -121,5 +125,6 @@
         [:tbody {:id "table-content"
                  :class ["bg-white" "divide-y" "divide-gray-200"]}
          (for [movie movies]
-           (list-item {:movie movie}))]]]
+           (list-item {:router router
+                       :movie movie}))]]]
       (form {:router router})]]))

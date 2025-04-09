@@ -11,4 +11,8 @@
    ["/movies"
     ["" {:name ::movie-list
          :post {:handler handlers/create-movie-handler
-                :responses {200 {:body string?}}}}]]])
+                :responses {200 {:body string?}}}}]
+    ["/:id"
+     ["" {:name ::movie-details
+          :delete {:handler handlers/delete-movie-handler
+                   :parameters {:path {:id pos-int?}}}}]]]])

@@ -55,3 +55,8 @@
                                 :movie (queries/create-movie (:db context) params)})]])
           (reitit-extras/render-html)
           (response/header "Content-Type" "text/html")))))
+
+(defn delete-movie-handler
+  [{:keys [context parameters]}]
+  (queries/delete-movie (:db context) {:id (get-in parameters [:path :id])})
+  (response/response nil))

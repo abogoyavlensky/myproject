@@ -14,3 +14,9 @@
                               :year year
                               :director director}]
                     :returning [:*]}))
+
+(defn delete-movie
+  [db {:keys [id]}]
+  (db/exec-one! db {:delete-from :movie
+                    :where [:= :id id]
+                    :returning [:*]}))
