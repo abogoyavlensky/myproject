@@ -57,7 +57,7 @@
      "Delete"]]])
 
 (defn form-input
-  [{:keys [field-name field-type field-value attrs]}]
+  [{:keys [field-name field-type field-value errors attrs]}]
   [:div
    {:class ["flex" "flex-col"]}
    [:input (merge {:class ["w-full" "border" "border-gray-300" "rounded-md" "px-3" "py-2"]
@@ -65,10 +65,12 @@
                    :name field-name
                    :value (or field-value "")
                    :placeholder (str "Enter " field-name)}
-                  attrs)]])
+                  attrs)]
+   (for [err errors]
+     [:p {:class ["text-red-500" "text-xs" "mt-1" "h-4"]} err])])
 
 (defn form
-  [{:keys [router params]}]
+  [{:keys [router errors params]}]
   [:form
    {:id "form-create-movie"
     :class ["border-t" "border-gray-200" "bg-gray-50" "p-6"]
@@ -79,13 +81,16 @@
    [:div {:class ["grid" "grid-cols-1" "md:grid-cols-4" "gap-4"]}
     (form-input {:field-name "title"
                  :field-type "text"
-                 :field-value (:title params)})
+                 :field-value (:title params)
+                 :errors (:title errors)})
     (form-input {:field-name "year"
                  :field-type "number"
                  :attrs {:min 1888}
+                 :errors (:year errors)
                  :field-value (:year params)})
     (form-input {:field-name "director"
                  :field-type "text"
+                 :errors (:director errors)
                  :field-value (:director params)})
     [:div {:class ["flex" "flex-col"]}
      [:button {:class ["bg-blue-600" "text-white" "rounded-md" "px-4" "py-2"
