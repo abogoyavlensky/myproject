@@ -107,7 +107,7 @@
     [:div {:id "content"
            :class ["container" "mx-auto" "p-6" "max-w-4xl"]}
      [:div {:class ["mb-10" "flex" "justify-between" "items-center"]}
-      [:h1 {:class ["text-2xl" "font-semibold" "text-gray-800"]} "Movies Lite"]]
+      [:h1 {:class ["text-2xl" "font-semibold" "text-gray-800"]} "Movies Lite CHANGES!"]]
      [:div {:class ["bg-white" "rounded-lg" "shadow-md" "overflow-hidden" "border"
                     "border-gray-200"]}
       [:div {:class ["overflow-x-auto"]}
