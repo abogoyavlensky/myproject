@@ -1,9 +1,9 @@
 (ns myproject.handlers
-  (:require [myproject.views :as views]
-            [malli.core :as m]
+  (:require [malli.core :as m]
             [malli.error :as me]
             [malli.transform :as mt]
             [myproject.queries :as queries]
+            [myproject.views :as views]
             [reitit-extras.core :as reitit-extras]
             [ring.util.response :as response]))
 

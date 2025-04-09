@@ -1,11 +1,11 @@
 (ns myproject.home-test
   (:require [clj-http.client :as http]
-            [myproject.db :as db]
-            [myproject.queries :as queries]
             [clojure.test :refer :all]
             [hickory.core :as hickory]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
+            [myproject.db :as db]
+            [myproject.queries :as queries]
             [myproject.server :as-alias server]
             [myproject.test-utils :as test-utils]
             [reitit-extras.tests :as reitit-extras]))
@@ -34,10 +34,10 @@
                 :content
                 (first))))
     (is (= ["The Matrix" "1999" "Lana Wachowski, Lilly Wachowski"]
-          (->> body
-               (select/select (select/tag :td))
-               (map (comp first :content))
-               (butlast))))))
+           (->> body
+                (select/select (select/tag :td))
+                (map (comp first :content))
+                (butlast))))))
 
 (deftest test-create-movie-ok
   (let [server (::server/server ig-extras/*test-system*)
