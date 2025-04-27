@@ -28,9 +28,6 @@ env:
   secret:
     - SESSION_SECRET_KEY
 
-volumes:
-  - "/root/myproject-db:/app/db"
-
 # Database
 accessories:
   db:
