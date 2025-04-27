@@ -9,21 +9,18 @@
 (def ^:const CSRF-TOKEN-KEY :__anti-forgery-token)
 (def ^:const CSRF-TOKEN-HEADER "x-csrf-token")
 
-(defn- all-tables
-  [db]
-  (->> {:select [:name]
-        :from [:sqlite_master]
-        :where [:= :type "table"]}
-       (db/exec! db)
-       (map (comp keyword :name))))
 
 (defn with-truncated-tables
   "Remove all data from all tables."
   [f]
   (let [db (::db/db ig-extras/*test-system*)]
-    (doseq [table (all-tables db)
-            :when (not= :schema_version table)]
-      (db/exec! db {:delete-from table}))
+    (doseq [table (->> {:select [:tablename]
+                        :from [:pg_tables]
+                        :where [:= :schemaname "public"]}
+                       (db/exec! db)
+                       (mapv #(-> % :tablename keyword)))
+            :when (not= :ragtime_migrations table)]
+      (db/exec! db {:truncate table}))
     (f)))
 
 (defn get-csrf-token-and-cookies

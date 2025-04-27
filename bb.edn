@@ -8,8 +8,10 @@
   deps {:doc "Install all dev deps"
         :task (clojure "-P -X:dev:test:outdated")}
 
-  clj-repl {:doc "Run built-in Clojure REPL"
-            :task (shell "clj -A:dev:test")}
+  clj-repl {:doc "Run docker compose and built-in Clojure REPL"
+            :task (do
+                    (shell "docker compose up -d")
+                    (shell "clj -A:dev:test"))}
 
   fmt-check {:doc "Check code formatting"
              :task (shell "cljfmt" "check")}

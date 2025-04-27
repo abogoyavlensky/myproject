@@ -52,7 +52,7 @@
              [:tbody
               {:hx-swap-oob "beforeend:#table-content"}
               (views/list-item {:router router
-                                :movie (queries/create-movie (:db context) params)})]])
+                                :movie (queries/create-movie (:db context) validated-params)})]])
           (reitit-extras/render-html)
           (response/header "Content-Type" "text/html")))))
 

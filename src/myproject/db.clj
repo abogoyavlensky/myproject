@@ -17,13 +17,15 @@
   "Send query to db and return vector of result items."
   [db query]
   (let [query-sql (honey/format query)]
-    (jdbc/execute! db query-sql {:builder-fn jdbc-rs/as-unqualified-kebab-maps})))
+    (jdbc/execute! db query-sql {:builder-fn jdbc-rs/as-unqualified-kebab-maps
+                                 :return-keys true})))
 
 (defn exec-one!
   "Send query to db and return single result item."
   [db query]
   (let [query-sql (honey/format query)]
-    (jdbc/execute-one! db query-sql {:builder-fn jdbc-rs/as-unqualified-kebab-maps})))
+    (jdbc/execute-one! db query-sql {:builder-fn jdbc-rs/as-unqualified-kebab-maps
+                                     :return-keys true})))
 
 ; Component
 

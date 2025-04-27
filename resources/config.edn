@@ -1,6 +1,7 @@
 {:myproject.db/db
- {:jdbc-url #profile {:default "jdbc:sqlite:db/myproject.sqlite"
-                      :test "jdbc:sqlite::memory:"}}
+ {:jdbc-url #profile {:default #env DATABASE_URL
+                      :dev "jdbc:postgresql://localhost:5432/localdb?user=test&password=test"
+                      :test "jdbc:tc:postgresql:15.2-alpine3.17:///testdb?TC_DAEMON=true"}}
 
  :myproject.server/server
  {:options {:port #profile {:default 8000
