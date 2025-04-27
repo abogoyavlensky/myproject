@@ -27,6 +27,7 @@ builder:
 env:
   secret:
     - SESSION_SECRET_KEY
+    - DATABASE_URL
 
 # Database
 accessories:
