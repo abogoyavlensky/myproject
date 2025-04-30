@@ -4,7 +4,7 @@
 
  :myproject.server/server
  {:options {:port #profile {:default 8000
-                            :prod 80
+                            :prod 8080
                             :test #free-port true}
             :session-secret-key #profile {:default "test-secret-key"
                                           :prod #env SESSION_SECRET_KEY}
