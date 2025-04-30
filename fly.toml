@@ -10,7 +10,7 @@ processes = []
   initial_size = 1
 
 [[services]]
-  internal_port = 8080
+  internal_port = 80
   processes = ["app"]
   protocol = "tcp"
   [services.concurrency]
@@ -28,12 +28,12 @@ processes = []
     port = 443
 
   [[services.http_checks]]
-    grace_period = "40s"
+    grace_period = "60s"
     path = "/health"
     method = "get"
     protocol = "http"
-#    interval = 10000
-#    timeout = 2000
+    interval = "30s"
+    timeout = "5s"
 
 [[vm]]
   size = "shared-cpu-1x"

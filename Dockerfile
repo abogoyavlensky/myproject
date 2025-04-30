@@ -22,6 +22,6 @@ LABEL org.opencontainers.image.source=https://github.com/abogoyavlensky/myprojec
 WORKDIR /app
 COPY --from=build /app/target/standalone.jar /app/standalone.jar
 
-EXPOSE 8080
+EXPOSE 80
 # Increase the max memory limit to your needs
 CMD ["java", "-Xmx256m", "-jar", "standalone.jar"]
