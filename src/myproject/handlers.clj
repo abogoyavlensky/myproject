@@ -12,4 +12,4 @@
 
 (defn home-handler
   [_]
-  (reitit-extras/render-html views/home-page))
+  (reitit-extras/render-html (views/home-page)))
