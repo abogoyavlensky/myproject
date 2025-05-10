@@ -10,4 +10,6 @@
    ["/health" {:name ::health-check
                :get {:handler (fn [_] (response/response "OK"))}}]
    ["/register" {:name ::register
-                 :get {:handler auth-handlers/register-handler}}]])
+                 :get {:handler auth-handlers/register-handler}}]
+   ["/login" {:name ::login
+              :get {:handler auth-handlers/login-handler}}]])

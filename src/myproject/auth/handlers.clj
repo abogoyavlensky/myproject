@@ -7,3 +7,8 @@
   [_]
   (let [page (views/register-page)]
     (reitit-extras/render-html page)))
+
+(defn login-handler
+  [_]
+  (let [page (views/login-page)]
+    (reitit-extras/render-html page)))

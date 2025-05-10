@@ -42,7 +42,7 @@
      [:div {:class ["mx-auto" "text-center"]}
       [:h1 {:class ["text-5xl"]} text]]]))
 
-(defn- button
+(defn button
   [{:keys [url text]}]
   [:a {:class ["bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
                "text-slate-900 dark:text-white font-medium py-2 px-4 rounded-lg "
