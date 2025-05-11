@@ -51,7 +51,6 @@
   [{:keys [errors params parameters context]
     router :reitit.core/router
     :as request}]
-  #p (keys request)
   (if (some? errors)
     (ext/render-html (views/login-form {:router router
                                         :values params
@@ -61,9 +60,21 @@
           ; Calculate password hash always to avoid timing attacks
           {:keys [valid]} (hashers/verify password (:password user) {:alg :bcrypt+sha512})]
       (if (and (some? user) valid)
-        ; TODO: return user in session
         (-> (ext/render-html [:div])
-            (response/header "HX-Redirect" "/"))
+            (response/header "HX-Redirect" "/")
+            (assoc :session {:identity (dissoc user :password)}))
         (ext/render-html (views/login-form {:router router
                                             :values params
                                             :errors {:common ["Invalid email or password"]}}))))))
+
+(defn post-logout
+  [{:keys [errors params parameters context]
+    router :reitit.core/router
+    :as request}]
+  (-> (ext/render-html [:div])
+      (response/header "HX-Redirect" "/")
+      (assoc :session nil)))
+
+(defn get-account
+  [request]
+  (ext/render-html (views/account-page {:user (:identity request)})))

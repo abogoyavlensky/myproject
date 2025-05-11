@@ -23,5 +23,5 @@
         (response/status status-code))))
 
 (defn home-handler
-  [_]
-  (reitit-extras/render-html (views/home-page)))
+  [request]
+  (reitit-extras/render-html (views/home-page {:user (:identity request)})))

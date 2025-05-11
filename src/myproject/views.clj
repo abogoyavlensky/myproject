@@ -1,5 +1,6 @@
 (ns myproject.views
-  (:require [manifest-edn.core :as manifest]))
+  (:require [manifest-edn.core :as manifest]
+            [reitit-extras.core :as ext]))
 
 (defn base
   "Base component for html page."
@@ -43,24 +44,35 @@
       [:h1 {:class ["text-5xl"]} text]]]))
 
 (defn button
-  [{:keys [url text]}]
-  [:a {:class ["bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
-               "text-slate-900 dark:text-white font-medium py-2 px-4 rounded-lg "
-               "border border-slate-300 dark:border-slate-600 transition-colors duration-200"]
-       :href url} text])
+  [{:keys [url text props]}]
+  [:a (merge {:class ["bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      "text-slate-900 dark:text-white font-medium py-2 px-4 rounded-lg "
+                      "border border-slate-300 dark:border-slate-600 transition-colors duration-200"]
+              :href url}
+             props)
+      text])
 
 (defn home-page
-  []
+  [{:keys [user]}]
   (base
     ; ========= TODO: Update home page  ========================
     [:div
      {:class ["text-slate-800" "min-h-screen" "flex" "flex-col"]}
      [:nav {:class ["absolute" "top-0" "right-1/4" "p-4"]}
-      [:div {:class ["flex" "gap-4"]}
-       (button {:url "/login"
-                :text "Login"})
-       (button {:url "/register"
-                :text "Register"})]]
+      (if (some? user)
+        [:div {:class ["flex" "gap-4" "items-center" "justify-center"]}
+         [:p {:class ["text-slate-900" "font-semibold" "mx-auto"]} (:email user)]
+         (button {:url "/account"
+                  :text "Account"})
+         (button {:text "Logout"
+                  :url "#"
+                  :props {:hx-post "/logout"
+                          :hx-headers (ext/csrf-token-json)}})]
+        [:div {:class ["flex" "gap-4"]}
+         (button {:url "/login"
+                  :text "Login"})
+         (button {:url "/register"
+                  :text "Register"})])]
      [:main {:class ["flex-grow" "flex" "items-center" "justify-center"]}
       [:div {:class ["container" "mx-auto" "px-4" "max-w-4xl" "text-center"]}
        [:h1 {:class ["text-6xl" "font-bold" "mb-6" "text-slate-900"]} "Welcome to "
