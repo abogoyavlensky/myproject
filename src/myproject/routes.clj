@@ -7,7 +7,7 @@
             [reitit-extras.core :as ext]
             [ring.util.response :as response]))
 
-(defn wrap-authenticated?
+(defn wrap-login-required
   "Middleware used in routes that require authentication. Buddy checks
   if request key :identity is set to truthy value by any previous middleware.
   If the request is not authenticated, then redirect to Login page."
@@ -18,6 +18,17 @@
       (handler request)
       (response/redirect (ext/get-route router ::login)))))
 
+(defn wrap-already-logged-in
+  "Middleware used in routes that require authentication. Buddy checks
+  if request key :identity is set to truthy value by any previous middleware.
+  If the request is not authenticated, then redirect to Login page."
+  [handler]
+  (fn [{router :reitit.core/router
+        :as request}]
+    (if #p (buddy-auth/authenticated? request)
+      (response/redirect (ext/get-route router ::home-page))
+      (handler request))))
+
 (def routes
   (let [auth-backend (backends/session)]
     [["/" {:name ::home-page
@@ -27,6 +38,8 @@
      ["/health" {:name ::health-check
                  :get {:handler (fn [_] (response/response "OK"))}}]
      ["/register" {:name ::register
+                   :middleware [[auth-middleware/wrap-authentication auth-backend]
+                                wrap-already-logged-in]
                    :get {:handler auth-handlers/get-register}
                    :post {:handler auth-handlers/post-register
                           :parameters {:form [:map
@@ -34,6 +47,8 @@
                                               [:password [:string {:min 1}]]]}
                           :responses {200 {:body string?}}}}]
      ["/login" {:name ::login
+                :middleware [[auth-middleware/wrap-authentication auth-backend]
+                             wrap-already-logged-in]
                 :get {:handler auth-handlers/get-login}
                 :post {:handler auth-handlers/post-login
                        :parameters {:form [:map
@@ -44,6 +59,6 @@
                  :post {:handler auth-handlers/post-logout}}]
      ["/account" {:name ::account
                   :middleware [[auth-middleware/wrap-authentication auth-backend]
-                               wrap-authenticated?]
+                               wrap-login-required]
                   :get {:handler auth-handlers/get-account
                         :responses {200 {:body string?}}}}]]))

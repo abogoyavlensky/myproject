@@ -22,11 +22,11 @@
     (let [{:keys [email password]} (:form parameters)
           password-hash (hashers/derive password {:alg :bcrypt+sha512})]
       (try
-        (queries/create-user! (:db context) {:email email
-                                             :password-hash password-hash})
-        ; TODO: setup user to session
-        (-> (ext/render-html [:div])
-            (response/header "HX-Redirect" "/"))
+        (let [user (queries/create-user! (:db context) {:email email
+                                                        :password-hash password-hash})]
+          (-> (ext/render-html [:div])
+              (response/header "HX-Redirect" "/")
+              (assoc :session {:identity (dissoc user :password)})))
         ; TODO: refactor this to use a common error handler
         (catch SQLException e
           (if (re-find #"UNIQUE constraint failed" (ex-message e))
