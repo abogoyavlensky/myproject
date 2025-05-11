@@ -17,4 +17,9 @@
                                             [:password [:string {:min 1}]]]}
                         :responses {200 {:body string?}}}}]
    ["/login" {:name ::login
-              :get {:handler auth-handlers/get-login}}]])
+              :get {:handler auth-handlers/get-login}
+              :post {:handler auth-handlers/post-login
+                     :parameters {:form [:map
+                                         [:email [:string {:min 1}]]
+                                         [:password [:string {:min 1}]]]}
+                     :responses {200 {:body string?}}}}]])

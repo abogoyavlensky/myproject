@@ -7,3 +7,9 @@
                     :values [{:email email
                               :password password-hash}]
                     :returning [:*]}))
+
+(defn get-user
+  [db email]
+  (db/exec-one! db {:select [:*]
+                    :from [:user]
+                    :where [:= :email email]}))

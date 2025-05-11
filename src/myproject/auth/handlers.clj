@@ -3,6 +3,7 @@
             [myproject.auth.queries :as queries]
             [myproject.auth.views :as views]
             [reitit-extras.core :as ext]
+            [myproject.routes :as-alias routes]
             [ring.util.response :as response])
   (:import [java.sql SQLException]))
 
@@ -13,28 +14,25 @@
 
 (defn post-register
   [{:keys [context errors parameters params]
-    :as request
     router :reitit.core/router}]
   (if (some? errors)
     (ext/render-html (views/register-form {:router router
                                            :values params
                                            :errors (:humanized errors)}))
-    ; Calculate password hash always to avoid timing attacks
     (let [{:keys [email password]} (:form parameters)
           password-hash (hashers/derive password {:alg :bcrypt+sha512})]
       (try
         (queries/create-user! (:db context) {:email email
                                              :password-hash password-hash})
+        ; TODO: setup user to session
         (-> (ext/render-html [:div])
             (response/header "HX-Redirect" "/"))
-        ; TODO: setup user to session
         ; TODO: refactor this to use a common error handler
         (catch SQLException e
           (if (re-find #"UNIQUE constraint failed" (ex-message e))
-            (-> (ext/render-html (views/register-form {:router router
-                                                       :values params
-                                                       :errors {:email ["user already exists"]}}))
-                (assoc :status 400))
+            (ext/render-html (views/register-form {:router router
+                                                   :values params
+                                                   :errors {:email ["user already exists"]}}))
             (ext/render-html (views/register-form {:router router
                                                    :values params
                                                    :errors {:email ["unexpected database error while creating account"]}}))))
@@ -45,6 +43,27 @@
 
 
 (defn get-login
-  [_]
-  (let [page (views/login-page)]
+  [{router :reitit.core/router}]
+  (let [page (views/login-page {:router router})]
     (ext/render-html page)))
+
+(defn post-login
+  [{:keys [errors params parameters context]
+    router :reitit.core/router
+    :as request}]
+  #p (keys request)
+  (if (some? errors)
+    (ext/render-html (views/login-form {:router router
+                                        :values params
+                                        :errors (:humanized errors)}))
+    (let [{:keys [email password]} (:form parameters)
+          user (queries/get-user (:db context) email)
+          ; Calculate password hash always to avoid timing attacks
+          {:keys [valid]} (hashers/verify password (:password user) {:alg :bcrypt+sha512})]
+      (if (and (some? user) valid)
+        ; TODO: return user in session
+        (-> (ext/render-html [:div])
+            (response/header "HX-Redirect" "/"))
+        (ext/render-html (views/login-form {:router router
+                                            :values params
+                                            :errors {:common ["Invalid email or password"]}}))))))
