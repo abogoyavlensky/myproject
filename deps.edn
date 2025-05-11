@@ -12,6 +12,9 @@
         io.github.abogoyavlensky/reitit-extras {:mvn/version "0.1.22"}
         ring/ring-jetty-adapter {:mvn/version "1.14.1"}
         io.github.abogoyavlensky/manifest-edn {:mvn/version "0.1.1"}
+        ; auth
+        buddy/buddy-hashers {:mvn/version "2.0.167"}
+        buddy/buddy-auth {:mvn/version "3.0.323"}
         ; db
         hikari-cp/hikari-cp {:mvn/version "3.2.0"}
         org.xerial/sqlite-jdbc {:mvn/version "3.49.1.0"}
@@ -23,7 +26,8 @@
 
  :aliases {:dev {:extra-paths ["dev"]
                  :extra-deps {integrant/repl {:mvn/version "0.4.0"}
-                              ring/ring-devel {:mvn/version "1.14.1"}}}
+                              ring/ring-devel {:mvn/version "1.14.1"}
+                              io.github.tonsky/clojure-plus {:mvn/version "1.5.0"}}}
 
            :test {:extra-paths ["test"]
                   :extra-deps {eftest/eftest {:mvn/version "0.6.0"}
