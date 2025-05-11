@@ -1,7 +1,7 @@
 (ns myproject.routes
-  (:require [myproject.handlers :as handlers]
-            [ring.util.response :as response]
-            [myproject.auth.handlers :as auth-handlers]))
+  (:require [myproject.auth.handlers :as auth-handlers]
+            [myproject.handlers :as handlers]
+            [ring.util.response :as response]))
 
 (def routes
   [["/" {:name ::home-page
@@ -10,6 +10,8 @@
    ["/health" {:name ::health-check
                :get {:handler (fn [_] (response/response "OK"))}}]
    ["/register" {:name ::register
-                 :get {:handler auth-handlers/register-handler}}]
+                 :get {:handler auth-handlers/get-register}
+                 :post {:handler auth-handlers/post-register
+                        :responses {200 {:body string?}}}}]
    ["/login" {:name ::login
-              :get {:handler auth-handlers/login-handler}}]])
+              :get {:handler auth-handlers/get-login}}]])

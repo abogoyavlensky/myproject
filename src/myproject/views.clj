@@ -57,8 +57,10 @@
      {:class ["text-slate-800" "min-h-screen" "flex" "flex-col"]}
      [:nav {:class ["absolute" "top-0" "right-1/4" "p-4"]}
       [:div {:class ["flex" "gap-4"]}
-       (button {:url "/login" :text "Login"})
-       (button {:url "/register" :text "Register"})]]
+       (button {:url "/login"
+                :text "Login"})
+       (button {:url "/register"
+                :text "Register"})]]
      [:main {:class ["flex-grow" "flex" "items-center" "justify-center"]}
       [:div {:class ["container" "mx-auto" "px-4" "max-w-4xl" "text-center"]}
        [:h1 {:class ["text-6xl" "font-bold" "mb-6" "text-slate-900"]} "Welcome to "
