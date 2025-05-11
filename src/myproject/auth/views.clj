@@ -1,5 +1,6 @@
 (ns myproject.auth.views
-  (:require [myproject.routes :as-alias routes]
+  (:require [clojure.string :as str]
+            [myproject.routes :as-alias routes]
             [myproject.views :as views]
             [reitit-extras.core :as ext]))
 
@@ -7,7 +8,7 @@
   [{:keys [input-name input-type input-value errors props]}]
   [:div
    [:label {:class ["mb-2" "inline-block" "text-sm" "text-gray-800" "sm:text-base"]
-            :for "email"} "Email"]
+            :for input-name} (str/capitalize input-name)]
    [:input (merge {:class ["w-full" "rounded-lg" "border" "px-3" "py-2" "text-gray-800"
                            "outline-none" "ring-indigo-300" "transition" "duration-100" "focus:ring"
                            (when (seq errors) "border-red 500")]
@@ -32,13 +33,13 @@
    [:div {:class ["flex" "flex-col" "gap-4" "p-4" "md:p-8"]}
     (form-input {:input-name "email"
                  :input-type "email"
-                 :input-value (:email #p values)
+                 :input-value (:email values)
                  :errors (:email errors)
                  ;:required true
                  :props {:autocomplete "email"}})
     (form-input {:input-name "password"
                  :input-type "password"
-                 :input-value (:password #p values)
+                 :input-value (:password values)
                  :errors (:password errors)
                  ;:required true
                  :props {:autocomplete "new-password"}})
