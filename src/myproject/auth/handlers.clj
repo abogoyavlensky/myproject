@@ -11,7 +11,7 @@
     (ext/render-html page)))
 
 (defn post-register
-  [{:keys [context errors parameters]
+  [{:keys [context errors parameters params]
     :as request
     router :reitit.core/router}]
   #p (keys request)
@@ -23,12 +23,14 @@
         ; Calculate password hash always to avoid timing attacks
         password-hash #p (hashers/derive password {:alg :bcrypt+sha512})]
     (if (some? errors)
+      (ext/render-html (views/register-form #p {:router router
+                                                :values params
+                                                :errors (:humanized errors)}))
       (do
         ;(queries/create-user! (:db context) {:email email
         ;                                     :password-hash password-hash})
-        (ext/render-html (views/register-form {:router router})))
-      (ext/render-html (views/register-form {:router router
-                                             :errors errors})))))
+        (ext/render-html (views/register-form {:router router}))))))
+
 
 (defn get-login
   [_]
