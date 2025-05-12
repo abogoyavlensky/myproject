@@ -4,6 +4,7 @@
             [buddy.auth :as buddy-auth]
             [buddy.auth.backends :as backends]
             [buddy.auth.middleware :as auth-middleware]
+            [myproject.auth.spec :as spec]
             [reitit-extras.core :as ext]
             [ring.util.response :as response]))
 
@@ -25,7 +26,7 @@
   [handler]
   (fn [{router :reitit.core/router
         :as request}]
-    (if #p (buddy-auth/authenticated? request)
+    (if (buddy-auth/authenticated? request)
       (response/redirect (ext/get-route router ::home-page))
       (handler request))))
 
@@ -43,8 +44,8 @@
                    :get {:handler auth-handlers/get-register}
                    :post {:handler auth-handlers/post-register
                           :parameters {:form [:map
-                                              [:email [:string {:min 1}]]
-                                              [:password [:string {:min 1}]]]}
+                                              [:email spec/Email]
+                                              [:password [:string {:min 8}]]]}
                           :responses {200 {:body string?}}}}]
      ["/login" {:name ::login
                 :middleware [[auth-middleware/wrap-authentication auth-backend]
@@ -52,7 +53,7 @@
                 :get {:handler auth-handlers/get-login}
                 :post {:handler auth-handlers/post-login
                        :parameters {:form [:map
-                                           [:email [:string {:min 1}]]
+                                           [:email spec/Email]
                                            [:password [:string {:min 1}]]]}
                        :responses {200 {:body string?}}}}]
      ["/logout" {:name ::logout
