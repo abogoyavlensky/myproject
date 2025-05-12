@@ -78,3 +78,27 @@
 (defn get-account
   [request]
   (ext/render-html (views/account-page {:user (:identity request)})))
+
+(defn get-forgot-password
+  [{router :reitit.core/router}]
+  (let [page (views/forgot-password-page {:router router})]
+    (ext/render-html page)))
+
+(defn post-forgot-password
+  [{:keys [errors params parameters context]
+    router :reitit.core/router
+    :as request}]
+  (if (seq errors)
+    (ext/render-html (views/forgot-password-form {:router router
+                                                  :values params
+                                                  :errors (:humanized errors)}))
+    (let [{:keys [email]} (:form parameters)
+          user (queries/get-user (:db context) email)]
+      (when (some? user)
+        ; TODO: send email with reset link
+        (println (str "============================================\n"
+                      "Sending password reset email to: " email "\n"
+                      "============================================\n")))
+      (ext/render-html
+        (views/forgot-password-form {:router router
+                                     :email-sent? true})))))

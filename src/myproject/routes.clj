@@ -56,6 +56,14 @@
                                            [:email spec/Email]
                                            [:password [:string {:min 1}]]]}
                        :responses {200 {:body string?}}}}]
+     ["/forgot-password" {:name ::forgot-password
+                          :middleware [[auth-middleware/wrap-authentication auth-backend]
+                                       wrap-already-logged-in]
+                          :get {:handler auth-handlers/get-forgot-password}
+                          :post {:handler auth-handlers/post-forgot-password
+                                 :parameters {:form [:map
+                                                     [:email spec/Email]]}
+                                 :responses {200 {:body string?}}}}]
      ["/logout" {:name ::logout
                  :post {:handler auth-handlers/post-logout}}]
      ["/account" {:name ::account

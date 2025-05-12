@@ -98,7 +98,7 @@
           [:span err]])])
     [:div {:class ["flex" "items-end" "justify-end" "py-2"]}
      [:a {:class ["text-indigo-500" "transition" "duration-100" "hover:text-indigo-600" "active:text-indigo-700"]
-          :href "#"} "Forgot password?"]]
+          :href (ext/get-route router ::routes/forgot-password)} "Forgot password?"]]
     [:button {:class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm" "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition" "duration-100" "hover:bg-gray-700" "focus-visible:ring" "active:bg-gray-600" "md:text-base" "cursor-pointer"]} "Log in"]]
    [:div {:class ["flex" "items-center" "justify-center" "p-4"]}
     [:p {:class ["text-center" "text-sm" "text-gray-500"]}
@@ -133,6 +133,7 @@
       [:div {:class ["mx-auto" "max-w-lg"]}
        [:div {:class ["flex" "flex-col" "gap-4" "p-4" "md:p-8"]}
         [:div {:class ["text-gray-800" "text-sm" "font-semibold"]} (str "Email: " (:email user))]
+        ; TODO: maybe remove
         [:button
          {:class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm"
                   "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition"
@@ -142,3 +143,36 @@
           :hx-target "#content"
           :hx-swap "innerHTML"}
          "Logout"]]]]]))
+
+(defn forgot-password-form
+  [{:keys [router values errors email-sent?]}]
+  (if email-sent?
+    [:p {:class ["text-center" "text-sm" "text-gray-500"]} "Check your email for the password reset link."]
+    [:form
+     {:id "form-forgot-password"
+      :class ["mx-auto" "max-w-lg"]
+      :hx-post (ext/get-route router ::routes/forgot-password)
+      :hx-target "#form-forgot-password"
+      :hx-swap "outerHTML"}
+     (ext/csrf-token-html)
+     [:p {:class ["text-center" "text-sm" "text-gray-500"]} "Enter your email address and we'll send you a link to reset your password."]
+     [:div {:class ["flex" "flex-col" "gap-4" "p-4" "md:p-8"]}
+      (form-input {:input-name "email"
+                   :input-type "email"
+                   :input-value (:email values)
+                   :errors (:email errors)
+                   :required true
+                   :props {:autocomplete "email"}})
+      [:button {:class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm" "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition" "duration-100" "hover:bg-gray-700" "focus-visible:ring" "active:bg-gray-600" "md:text-base" "cursor-pointer"]} "Send password reset instructions"]]]))
+
+(defn forgot-password-page
+  [args]
+  (views/base
+    [:div {:class ["bg-white" "py-6" "sm:py-8" "lg:py-12" "mt-20"]}
+     [:nav {:class ["absolute" "top-0" "left-1/4" "p-4"]}
+      [:div {:class ["flex" "gap-4"]}
+       (views/button {:url "/"
+                      :text "<- Home page"})]]
+     [:div {:class ["mx-auto" "max-w-screen-2xl" "px-4" "md:px-8"]}
+      [:h2 {:class ["mb-4" "text-center" "text-2xl" "font-bold" "text-gray-800" "md:mb-8" "lg:text-3xl"]} "Forgot your password?"]
+      (forgot-password-form args)]]))
