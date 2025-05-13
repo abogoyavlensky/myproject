@@ -64,6 +64,18 @@
                                  :parameters {:form [:map
                                                      [:email spec/Email]]}
                                  :responses {200 {:body string?}}}}]
+     ["/reset-password" {:name ::reset-password
+                         :middleware [[auth-middleware/wrap-authentication auth-backend]
+                                      wrap-already-logged-in]
+                         :get {:handler auth-handlers/get-reset-password
+                               :parameters {:query [:map
+                                                    [:token string?]]}}
+                         :post {:handler auth-handlers/post-reset-password
+                                :parameters {:form [:map
+                                                    [:password [:string {:min 8}]]
+                                                    [:confirm-password [:string {:min 8}]]
+                                                    [:token string?]]}
+                                :responses {200 {:body string?}}}}]
      ["/logout" {:name ::logout
                  :post {:handler auth-handlers/post-logout}}]
      ["/account" {:name ::account

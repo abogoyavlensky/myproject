@@ -1,11 +1,13 @@
 (ns myproject.auth.handlers
   (:require [buddy.hashers :as hashers]
+            [buddy.sign.jwt :as jwt]
             [myproject.auth.queries :as queries]
             [myproject.auth.views :as views]
             [reitit-extras.core :as ext]
             [myproject.routes :as-alias routes]
             [ring.util.response :as response])
-  (:import [java.sql SQLException]))
+  (:import [java.sql SQLException]
+           [java.time Instant Duration]))
 
 (defn get-register
   [{router :reitit.core/router}]
@@ -95,10 +97,65 @@
     (let [{:keys [email]} (:form parameters)
           user (queries/get-user (:db context) email)]
       (when (some? user)
-        ; TODO: send email with reset link
-        (println (str "============================================\n"
-                      "Sending password reset email to: " email "\n"
-                      "============================================\n")))
+        ; Generate JWT token for password reset
+        (let [now (Instant/now)
+              claims {:sub (:id user)
+                      :email email
+                      :exp (.getEpochSecond (.plus now (Duration/ofHours 24)))
+                      :iat (.getEpochSecond now)}
+              token (jwt/sign claims (:session-secret-key (:options context)) {:alg :hs256})
+              reset-link (str (-> request :headers (get "host"))
+                              (ext/get-route router ::routes/reset-password)
+                              "?token=" token)]
+          ;; TODO: In production, send this via email instead of printing to console
+          (println (str "============================================\n"
+                         "Password Reset Link for: " email "\n"
+                         reset-link "\n"
+                         "============================================\n"))))
       (ext/render-html
         (views/forgot-password-form {:router router
                                      :email-sent? true})))))
+
+(defn get-reset-password
+  [{:keys [parameters context]
+    router :reitit.core/router
+    :as request}]
+  (let [token (get-in parameters [:query :token])]
+    (try
+      (let [claims (jwt/unsign token (:session-secret-key (:options context)) {:alg :hs256})
+            email (:email claims)]
+        (ext/render-html (views/reset-password-page {:router router
+                                                     :token token
+                                                     :email email})))
+      (catch Exception _e
+        (-> (ext/render-html (views/invalid-reset-token-page {:router router}))
+            (response/status 400))))))
+
+(defn post-reset-password
+  [{:keys [errors params parameters context]
+    router :reitit.core/router
+    :as request}]
+  (if (seq errors)
+    (ext/render-html (views/reset-password-form {:router router
+                                                 :values (dissoc params :token)
+                                                 :token (:token params)
+                                                 :errors (:humanized errors)}))
+    (let [{:keys [password confirm-password token]} (:form parameters)]
+      (if (not= password confirm-password)
+        (ext/render-html (views/reset-password-form {:router router
+                                                     :values (dissoc params :token)
+                                                     :token (:token params)
+                                                     :errors {:common ["Passwords do not match"]}}))
+        ; Verify the token and update the password
+        (try
+          (let [claims (jwt/unsign token (:session-secret-key (:options context)) {:alg :hs256})
+                user-id (:sub claims)
+                password-hash (hashers/derive password {:alg :bcrypt+sha512})]
+            (queries/update-password! (:db context) {:id user-id
+                                                     :password-hash password-hash})
+            (ext/render-html (views/password-reset-success-page {:router router})))
+          (catch Exception e
+            (ext/render-html (views/reset-password-form {:router router
+                                                         :values (dissoc params :token)
+                                                         :token (:token params)
+                                                         :errors {:common ["Invalid or expired token"]}}))))))))

@@ -13,3 +13,10 @@
   (db/exec-one! db {:select [:*]
                     :from [:user]
                     :where [:= :email email]}))
+
+(defn update-password!
+  [db {:keys [id password-hash]}]
+  (db/exec-one! db {:update :user
+                    :set {:password password-hash}
+                    :where [:= :id id]
+                    :returning [:*]}))
