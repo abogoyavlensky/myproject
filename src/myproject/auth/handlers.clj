@@ -79,7 +79,41 @@
 
 (defn get-account
   [request]
-  (ext/render-html (views/account-page {:user (:identity request)})))
+  (ext/render-html (views/account-page {:user (:identity request)
+                                        :router (:reitit.core/router request)})))
+
+(defn post-change-password
+  [{:keys [context errors parameters params identity]
+    router :reitit.core/router
+    :as request}]
+  (if (seq errors)
+    (ext/render-html (views/change-password-form {:user identity
+                                                  :router router
+                                                  :values params
+                                                  :errors (:humanized errors)}))
+    (let [{:keys [current-password new-password confirm-new-password]} (:form parameters)
+          user (queries/get-user (:db context) (:email identity))
+          {:keys [valid]} (hashers/verify current-password (:password user) {:alg :bcrypt+sha512})]
+      (cond
+        (not valid)
+        (ext/render-html (views/change-password-form {:user identity
+                                                      :router router
+                                                      :values params
+                                                      :errors {:current-password ["Current password is incorrect"]}}))
+        
+        (not= new-password confirm-new-password)
+        (ext/render-html (views/change-password-form {:user identity
+                                                      :router router
+                                                      :values params
+                                                      :errors {:common ["New passwords do not match"]}}))
+        
+        :else
+        (let [password-hash (hashers/derive new-password {:alg :bcrypt+sha512})]
+          (queries/update-password! (:db context) {:id (:id identity)
+                                                   :password-hash password-hash})
+          (ext/render-html (views/change-password-form {:user identity
+                                                        :router router
+                                                        :password-changed? true})))))))
 
 (defn get-forgot-password
   [{router :reitit.core/router}]

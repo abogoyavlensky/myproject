@@ -123,9 +123,52 @@
       [:h2 {:class ["mb-4" "text-center" "text-2xl" "font-bold" "text-gray-800" "md:mb-8" "lg:text-3xl"]} "Login"]
       (login-form args)]]))
 
+(defn password-change-success
+  []
+  [:div {:class ["w-full" "max-w-md" "mx-auto" "p-6" "bg-green-50" "rounded-lg" "shadow-md"]}
+   [:div {:class ["text-center"]}
+    [:h3 {:class ["text-xl" "font-semibold" "text-green-800" "mb-2"]} "Password Updated Successfully"]
+    [:p {:class ["text-green-700"]} "Your password has been changed."]]])
+
+(defn change-password-form
+  [{:keys [router values errors password-changed?]}]
+  [:form {:id "form-change-password"
+          :hx-post "/account/change-password"
+          :hx-swap "outerHTML"
+          :hx-target "#form-change-password"
+          :class ["space-y-4"]}
+   (ext/csrf-token-html)
+   (form-input {:input-name "current-password"
+                :input-label "Current Password"
+                :input-type "password"
+                :input-value (:current-password values)
+                :errors (:current-password errors)
+                :required true})
+   (form-input {:input-name "new-password"
+                :input-label "New Password"
+                :input-type "password"
+                :input-value (:new-password values)
+                :errors (:new-password errors)
+                :required true})
+   (form-input {:input-name "confirm-new-password"
+                :input-label "Confirm New Password"
+                :input-type "password"
+                :input-value (:confirm-new-password values)
+                :errors (:confirm-new-password errors)
+                :required true})
+   (common-errors (:common errors))
+   (when password-changed?
+     (password-change-success))
+    
+   [:button {:type "submit"
+             :class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm"
+                     "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition"
+                     "duration-100" "hover:bg-gray-700" "focus-visible:ring" "active:bg-gray-600"
+                     "md:text-base"]}
+    "Update Password"]])
 
 (defn account-page
-  [{:keys [router user]}]
+  [{:keys [user] :as args}]
   (views/base
     [:div {:class ["bg-white" "py-6" "sm:py-8" "lg:py-12" "mt-20"]}
      [:nav {:class ["absolute" "top-0" "left-1/4" "p-4"]}
@@ -136,17 +179,10 @@
       [:h2 {:class ["mb-4" "text-center" "text-2xl" "font-bold" "text-gray-800" "md:mb-8" "lg:text-3xl"]} "Account settings"]
       [:div {:class ["mx-auto" "max-w-lg"]}
        [:div {:class ["flex" "flex-col" "gap-4" "p-4" "md:p-8"]}
-        [:div {:class ["text-gray-800" "text-sm" "font-semibold"]} (str "Email: " (:email user))]
-        ; TODO: maybe remove
-        [:button
-         {:class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm"
-                  "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition"
-                  "duration-100" "hover:bg-gray-700" "focus-visible:ring" "active:bg-gray-600"
-                  "md:text-base"]
-          ;:hx-get (ext/get-route (:router args) ::routes/logout)
-          :hx-target "#content"
-          :hx-swap "innerHTML"}
-         "Logout"]]]]]))
+        [:h3 {:class ["text-2xl" "font-semibold" "text-gray-800" "mb-4"]} "User Information"]
+        [:div {:class ["text-gray-800" "text-md" "font-semibold"]} (str "Email: " (:email user))]
+        [:h3 {:class ["text-2xl" "font-semibold" "text-gray-800" "mb-4" "mt-12"]} "Change Password"]
+        (change-password-form args)]]]]))
 
 (defn forgot-password-form
   [{:keys [router values errors email-sent?]}]
