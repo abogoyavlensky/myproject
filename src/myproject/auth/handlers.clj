@@ -41,7 +41,7 @@
         (catch Exception _e
           (ext/render-html (views/register-form {:router router
                                                  :values params
-                                                 :errors {:email ["unexpected server error"]}})))))))
+                                                 :errors {:common ["unexpected server error"]}})))))))
 
 
 (defn get-login

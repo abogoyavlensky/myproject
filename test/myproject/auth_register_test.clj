@@ -125,3 +125,34 @@
                                first
                                :attrs
                                :value)))))
+     
+(deftest test-post-register-password-too-short
+  (let [server (::server/server ig-extras/*test-system*)
+        base-url (reitit-extras/get-server-url server :host)
+        url (str base-url "/register")
+        test-email "test@example.com"
+        short-password "1234567" ; Less than 8 characters
+
+        ;; Try to register with a password that's too short
+        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies url)
+        response (http/post url {:cookies cookies
+                                 :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
+                                               :email test-email
+                                               :password short-password}})
+
+        ;; Parse the response body to check for error message
+        body (-> response
+                 :body
+                 (hickory/parse)
+                 (hickory/as-hickory))
+        error-messages (select/select (select/class :error-message) body)
+        inputs (select/select (select/tag :input) body)]
+
+    (is (= 1 (count error-messages)))
+    (is (= 200 (:status response)))
+    (is (= ["Should be at least 8 characters"] (-> error-messages first :content)))
+    (is (= test-email (->> inputs
+                           (filter #(= "email" (get-in % [:attrs :name])))
+                           first
+                           :attrs
+                           :value)))))
