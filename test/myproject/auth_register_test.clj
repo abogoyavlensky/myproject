@@ -1,0 +1,40 @@
+(ns myproject.auth-register-test
+  (:require [clj-http.client :as http]
+            [clojure.test :refer :all]
+            [hickory.core :as hickory]
+            [hickory.select :as select]
+            [integrant-extras.tests :as ig-extras]
+            [myproject.server :as-alias server]
+            [myproject.test-utils :as test-utils]
+            [reitit-extras.tests :as reitit-extras]))
+
+(use-fixtures :once
+  (ig-extras/with-system))
+
+(use-fixtures :each
+  test-utils/with-truncated-tables)
+
+(deftest test-get-register-ok
+  (let [server (::server/server ig-extras/*test-system*)
+        base-url (reitit-extras/get-server-url server :host)
+        url (str base-url "/register")
+        body (-> (http/get url)
+                 :body
+                 (hickory/parse)
+                 (hickory/as-hickory))]
+    (is (= "Register"
+           (->> body
+                (select/select (select/tag :h2))
+                (first)
+                :content
+                (first))))
+    (is (= #{"__anti-forgery-token" "email" "password"}
+           (->> body
+                (select/select (select/tag :input))
+                (map (comp :name :attrs))
+                (set))))
+    (is (= {:hx-post "/register"
+            :hx-target "#form-register"
+            :id "form-register"}
+           (dissoc (->> body (select/select (select/tag :form)) first :attrs)
+                   :class :hx-swap)))))
