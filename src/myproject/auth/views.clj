@@ -19,7 +19,7 @@
                    :autocapitalize "none"}
                   props)]
    (for [error-message errors]
-     [:p {:class ["text-red-500" "text-sm" "mt-1"]} (str/capitalize error-message)])])
+     [:p {:class ["text-red-500" "text-sm" "mt-1" "error-message"]} (str/capitalize error-message)])])
 
 (defn register-form
   [{:keys [router errors values]}]
