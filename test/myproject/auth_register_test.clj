@@ -95,3 +95,33 @@
                            first
                            :attrs
                            :value)))))
+    
+(deftest test-post-register-invalid-email
+  (let [server (::server/server ig-extras/*test-system*)
+        base-url (reitit-extras/get-server-url server :host)
+        url (str base-url "/register")
+        invalid-email "not-an-email"
+
+        ;; Try to register with an invalid email format
+        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies url)
+        response (http/post url {:cookies cookies
+                                 :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
+                                               :email invalid-email
+                                               :password "some-password"}})
+
+        ;; Parse the response body to check for error message
+        body (-> response
+                 :body
+                 (hickory/parse)
+                 (hickory/as-hickory))
+        error-messages (select/select (select/class :error-message) body)
+        inputs (select/select (select/tag :input) body)]
+
+     (is (= 1 (count error-messages)))
+     (is (= 200 (:status response)))
+     (is (= ["Invalid email format"] (-> error-messages first :content)))
+     (is (= invalid-email (->> inputs
+                               (filter #(= "email" (get-in % [:attrs :name])))
+                               first
+                               :attrs
+                               :value)))))
