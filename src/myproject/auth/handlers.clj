@@ -60,7 +60,12 @@
     (let [{:keys [email password]} (:form parameters)
           user (queries/get-user (:db context) email)
           ; Calculate password hash always to avoid timing attacks
-          {:keys [valid]} (hashers/verify password (:password user) {:alg :bcrypt+sha512})]
+          {:keys [valid]} (try
+                            (hashers/verify password (:password user) {:alg :bcrypt+sha512})
+                            (catch Exception _e
+                              {:valid false})
+                            (catch AssertionError _e
+                              {:valid false}))]
       (if (and (some? user) valid)
         (-> (ext/render-html [:div])
             (response/header "HX-Redirect" "/")

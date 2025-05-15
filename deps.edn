@@ -27,8 +27,7 @@
 
  :aliases {:dev {:extra-paths ["dev"]
                  :extra-deps {integrant/repl {:mvn/version "0.4.0"}
-                              ring/ring-devel {:mvn/version "1.14.1"}
-                              io.github.tonsky/clojure-plus {:mvn/version "1.5.0"}}}
+                              ring/ring-devel {:mvn/version "1.14.1"}}}
 
            :test {:extra-paths ["test"]
                   :extra-deps {eftest/eftest {:mvn/version "0.6.0"}

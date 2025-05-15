@@ -1,8 +1,6 @@
 (ns user
   (:require [clojure.tools.namespace.repl :as repl]
             [clojure.repl.deps :as repl-deps]
-            [clojure+.error :as clojure+.error]
-            [clojure+.hashp :as clojure+.hashp]
             [malli.dev :as malli-dev]
             [eftest.runner :as eftest]
             [eftest.report.pretty :as eftest-report]
@@ -12,8 +10,6 @@
 
 (repl/set-refresh-dirs "dev" "src" "test")
 (malli-dev/start!)
-(clojure+.hashp/install!)
-(clojure+.error/install!)
 
 (defn reset
   "Restart system."

@@ -75,7 +75,7 @@
      (for [err errors]
        [:div {:class ["flex" "items-start"]}
         [:span {:class ["mr-2"]} "•"]
-        [:span err]])]))
+        [:span {:class ["error-message"]} err]])]))
 
 (defn login-form
   [{:keys [router values errors]}]
@@ -159,7 +159,7 @@
    (common-errors (:common errors))
    (when password-changed?
      (password-change-success))
-    
+
    [:button {:type "submit"
              :class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm"
                      "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition"
