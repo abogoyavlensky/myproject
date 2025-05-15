@@ -4,6 +4,7 @@
             [hickory.core :as hickory]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
+            [myproject.auth.queries :as queries]
             [myproject.db :as db]
             [myproject.test-utils :as test-utils]
             [reitit-extras.tests :as reitit-extras]))
@@ -49,11 +50,8 @@
         test-password "password123"
         
         ;; First register a user
-        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies register-url)
-        _ (http/post register-url {:cookies cookies
-                                   :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
-                                                 :email test-email
-                                                 :password test-password}})
+        _ (queries/create-user! db {:email test-email
+                                    :password test-password})
         
         ;; Now attempt to login
         {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies login-url)

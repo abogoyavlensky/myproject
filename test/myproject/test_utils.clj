@@ -41,3 +41,16 @@
                         :value)]
     {:csrf-token csrf-token
      :cookies (cookies/get-cookies cookie-store)}))
+
+(defn get-logged-in-cookies
+  "Get cookies for a logged-in user."
+  [base-url {:keys [email password]}]
+  (let [url (str base-url "/login")
+        {:keys [cookies csrf-token]} (get-csrf-token-and-cookies url)
+        cookie-store (cookies/cookie-store)
+        _ (http/post url {:cookies cookies
+                          :cookie-store cookie-store
+                          :form-params {CSRF-TOKEN-KEY csrf-token
+                                        :email email
+                                        :password password}})]
+    {:cookies (cookies/get-cookies cookie-store)}))

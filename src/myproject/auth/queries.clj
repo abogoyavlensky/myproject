@@ -1,11 +1,12 @@
 (ns myproject.auth.queries
-  (:require [myproject.db :as db]))
+  (:require [myproject.db :as db]
+            [buddy.hashers :as hashers]))
 
 (defn create-user!
-  [db {:keys [email password-hash]}]
+  [db {:keys [email password]}]
   (db/exec-one! db {:insert-into :user
                     :values [{:email email
-                              :password password-hash}]
+                              :password (hashers/derive password {:alg :bcrypt+sha512})}]
                     :returning [:*]}))
 
 (defn get-user

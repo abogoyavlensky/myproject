@@ -21,11 +21,10 @@
     (ext/render-html (views/register-form {:router router
                                            :values params
                                            :errors (:humanized errors)}))
-    (let [{:keys [email password]} (:form parameters)
-          password-hash (hashers/derive password {:alg :bcrypt+sha512})]
+    (let [{:keys [email password]} (:form parameters)]
       (try
         (let [user (queries/create-user! (:db context) {:email email
-                                                        :password-hash password-hash})]
+                                                        :password password})]
           (-> (ext/render-html [:div])
               (response/header "HX-Redirect" "/")
               (assoc :session {:identity (dissoc user :password)})))
