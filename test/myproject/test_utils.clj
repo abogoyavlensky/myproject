@@ -28,19 +28,23 @@
 
 (defn get-csrf-token-and-cookies
   "Return CSRF token and cookies for given page to be used in POST request."
-  [page-with-form-url]
-  (let [cookie-store (cookies/cookie-store)
-        response (http/get page-with-form-url {:cookie-store cookie-store})
-        csrf-token (->> response
-                        :body
-                        (hickory/parse)
-                        (hickory/as-hickory)
-                        (select/select (select/id CSRF-TOKEN-KEY))
-                        (first)
-                        :attrs
-                        :value)]
-    {:csrf-token csrf-token
-     :cookies (cookies/get-cookies cookie-store)}))
+  ([page-with-form-url]
+   (get-csrf-token-and-cookies page-with-form-url nil))
+  ([page-with-form-url cookies]
+   (let [cookie-store (cookies/cookie-store)
+         response (http/get page-with-form-url
+                            (cond-> {:cookie-store cookie-store}
+                              (some? cookies) (assoc :cookies cookies)))
+         csrf-token (->> response
+                         :body
+                         (hickory/parse)
+                         (hickory/as-hickory)
+                         (select/select (select/id CSRF-TOKEN-KEY))
+                         (first)
+                         :attrs
+                         :value)]
+     {:csrf-token csrf-token
+      :cookies (cookies/get-cookies cookie-store)})))
 
 (defn get-logged-in-cookies
   "Get cookies for a logged-in user."

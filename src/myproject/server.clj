@@ -128,7 +128,6 @@
                              ; negotiate request and response
                              muuntaja/format-middleware
                              ; Check CSRF token
-                             ; add call (linkboard.components/csrf-token-html) to a form
                              anti-forgery/wrap-anti-forgery
                              ; handle exceptions
                              reitit-extras/exception-middleware

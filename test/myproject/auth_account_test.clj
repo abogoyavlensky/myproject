@@ -6,7 +6,6 @@
             [myproject.auth.queries :as queries]
             [integrant-extras.tests :as ig-extras]
             [myproject.db :as db]
-            [myproject.server :as-alias server]
             [myproject.test-utils :as test-utils]
             [reitit-extras.tests :as reitit-extras]))
 
@@ -17,7 +16,7 @@
   test-utils/with-truncated-tables)
 
 (deftest test-get-account-ok
-  (let [server (::server/server ig-extras/*test-system*)
+  (let [server (:myproject.server/server ig-extras/*test-system*)
         db (::db/db ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
 
@@ -55,7 +54,7 @@
                     (first))))))
 
 (deftest test-get-account-unauthenticated
-  (let [server (::server/server ig-extras/*test-system*)
+  (let [server (:myproject.server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
         account-url (str base-url "/account")
         ;; Try to access account page without authentication
@@ -65,4 +64,43 @@
     (is (= 302 (:status response)))
     (is (= "/login" (get-in response [:headers "Location"])))))
 
+(deftest test-post-change-password-ok
+  (let [server (:myproject.server/server ig-extras/*test-system*)
+        db (::db/db ig-extras/*test-system*)
+        base-url (reitit-extras/get-server-url server :host)
 
+        ;; Create a user for testing
+        test-email "password-change@example.com"
+        original-password "original-password"
+        new-password "new-secure-password"
+        _ (queries/create-user! db {:email test-email
+                                    :password original-password})
+
+        ;; Login with original password
+        {:keys [csrf-token]} (test-utils/get-csrf-token-and-cookies (str base-url "/account"))
+        {:keys [cookies]} (test-utils/get-logged-in-cookies base-url
+                                                            {:email test-email
+                                                             :password original-password})
+
+        ;; Submit password change
+        change-password-url (str base-url "/account/change-password")
+        change-response (http/post change-password-url
+                                   {:cookies cookies
+                                    :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
+                                                  :current-password original-password
+                                                  :new-password new-password
+                                                  :confirm-new-password new-password}})
+
+        ;; Parse response to check for success message
+        change-body (-> change-response
+                        :body
+                        (hickory/parse)
+                        (hickory/as-hickory))]
+
+    ;; Verify password change was successful
+    (is (= 200 (:status change-response)))
+
+    ;; Check for success message in the response
+    (is (some? (->> change-body
+                    (select/select (select/find-in-text #".*Password Updated Successfully.*"))
+                    (first))))))
