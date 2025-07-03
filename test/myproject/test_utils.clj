@@ -58,3 +58,17 @@
                                         :email email
                                         :password password}})]
     {:cookies (cookies/get-cookies cookie-store)}))
+
+(defn post-with-csrf
+  "Simplified POST request with CSRF token handling.
+   Automatically gets CSRF token from the same URL before posting."
+  ([url form-params]
+   (post-with-csrf url form-params {}))
+  ([url form-params opts]
+   (let [{:keys [csrf-token cookies]} (get-csrf-token-and-cookies url (:cookies opts))]
+     (http/post url
+                (merge opts
+                       {:cookies cookies
+                        :form-params (assoc form-params CSRF-TOKEN-KEY csrf-token)})))))
+
+

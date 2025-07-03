@@ -10,10 +10,10 @@
             [reitit-extras.tests :as reitit-extras]))
 
 (use-fixtures :once
-  (ig-extras/with-system))
+              (ig-extras/with-system))
 
 (use-fixtures :each
-  test-utils/with-truncated-tables)
+              test-utils/with-truncated-tables)
 
 (deftest test-get-login-ok
   (let [server (:myproject.server/server ig-extras/*test-system*)
@@ -44,22 +44,19 @@
   (let [server (:myproject.server/server ig-extras/*test-system*)
         db (::db/db ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
-        register-url (str base-url "/register")
         login-url (str base-url "/login")
         test-email "user@example.com"
         test-password "password123"
-        
+
         ;; First register a user
         _ (queries/create-user! db {:email test-email
                                     :password test-password})
-        
-        ;; Now attempt to login
-        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies login-url)
-        response (http/post login-url {:cookies cookies
-                                       :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
-                                                     :email test-email
-                                                     :password test-password}})]
-    
+
+        ;; Now attempt to login using simplified CSRF handling
+        response (test-utils/post-with-csrf login-url
+                                            {:email test-email
+                                             :password test-password})]
+
     (is (= 200 (:status response)))
     (is (= "/" (get (:headers response) "HX-Redirect")))))
 
