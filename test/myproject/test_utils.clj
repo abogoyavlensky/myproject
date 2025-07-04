@@ -4,10 +4,15 @@
             [hickory.core :as hickory]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
-            [myproject.db :as db]))
+            [reitit-extras.core :as reitit-extras]
+            [myproject.db :as db]
+            [ring.middleware.session.cookie :as ring-session-cookie]
+            [ring.middleware.session.store :as ring-session-store]
+            [ring.middleware.anti-forgery :as anti-forgery]))
 
 (def ^:const CSRF-TOKEN-KEY :__anti-forgery-token)
 (def ^:const CSRF-TOKEN-HEADER "x-csrf-token")
+(def ^:const TEST-CSRF-TOKEN "test-csrf-token-123")
 
 (defn- all-tables
   [db]
@@ -72,3 +77,113 @@
                         :form-params (assoc form-params CSRF-TOKEN-KEY csrf-token)})))))
 
 
+(defn with-mock-csrf-token
+  "Test fixture that mocks CSRF token generation for the entire test."
+  [test-fn]
+  (with-redefs [anti-forgery/*anti-forgery-token* TEST-CSRF-TOKEN]
+    (test-fn)))
+
+
+(defn post-with-mock-csrf
+  "POST request with mocked CSRF token - no GET request needed."
+  ([url form-params]
+   (post-with-mock-csrf url form-params {}))
+  ([url form-params opts]
+   ;(with-redefs [anti-forgery/*anti-forgery-token* TEST-CSRF-TOKEN]
+   (let [cookie-store (cookies/cookie-store)]
+     (http/post url
+                (merge opts
+                       {:cookie-store cookie-store
+                        :form-params (assoc form-params CSRF-TOKEN-KEY TEST-CSRF-TOKEN)})))))
+
+(defn post-with-bypassed-csrf
+  "POST request with bypassed CSRF validation."
+  ([url form-params]
+   (post-with-bypassed-csrf url form-params {}))
+
+  ([url form-params opts]
+   (with-redefs [anti-forgery/valid-request? (constantly true)]
+     (http/post url (merge opts {:form-params form-params})))))
+
+
+(defn post-with-session-csrf
+  "POST request maintaining session for CSRF token."
+  ([url form-params]
+   (post-with-session-csrf url form-params {}))
+  ([url form-params opts]
+   (let [cookie-store (cookies/cookie-store)
+         ;; First request to establish session
+         _ (http/get url {:cookie-store cookie-store})
+         ;; Use the established session for POST
+         response (with-redefs [anti-forgery/*anti-forgery-token* TEST-CSRF-TOKEN]
+                    (http/post url (merge opts
+                                          {:cookie-store cookie-store
+                                           :form-params (assoc form-params CSRF-TOKEN-KEY TEST-CSRF-TOKEN)})))]
+     response)))
+
+
+(defn post-with-mocked-get-token
+  ([url form-params]
+   (post-with-mocked-get-token url form-params {}))
+
+  ([url form-params opts]
+   ;(with-redefs [ring.middleware.anti-forgery.session/session-token (constantly TEST-CSRF-TOKEN)]
+   (with-redefs [ring.middleware.anti-forgery.session/random-base64 (constantly TEST-CSRF-TOKEN)]
+     (let [cookie-store (cookies/cookie-store)]
+       (http/post url
+                  (merge opts
+                         {:cookie-store cookie-store
+                          :form-params (assoc form-params CSRF-TOKEN-KEY TEST-CSRF-TOKEN)}))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Custom session
+
+(defn create-session-store
+  "Create a session store using the same configuration as the server."
+  []
+  (let [session-key (reitit-extras/string->16-byte-array "test-secret-key")]
+    (ring-session-cookie/cookie-store
+      {:key session-key})))
+
+(defn create-test-session
+  "Create a test session with CSRF token and optional additional data."
+  ([csrf-token]
+   (create-test-session csrf-token {}))
+  ([csrf-token additional-data]
+   (merge {:ring.middleware.anti-forgery/anti-forgery-token csrf-token}
+          additional-data)))
+
+(defn encrypt-session-to-cookie
+  "Encrypt session data to a cookie value using the server's session store."
+  [session-data]
+  (let [session-store (create-session-store)
+        session-key (ring-session-store/write-session session-store nil session-data)]
+    session-key))
+
+(defn create-session-cookie
+  "Create a session cookie with the given session data."
+  [session-data]
+  (let [encrypted-value (encrypt-session-to-cookie session-data)]
+    {"ring-session" {:value encrypted-value
+                     :path "/"
+                     :http-only true
+                     :secure true}}))
+
+(defn post-with-custom-session
+  "POST request with custom session data."
+  ([url form-params session-data]
+   (post-with-custom-session url form-params session-data {}))
+  ([url form-params session-data opts]
+   (let [session-cookies (create-session-cookie session-data)
+         csrf-token (get session-data :ring.middleware.anti-forgery/anti-forgery-token)]
+     (http/post url (merge opts
+                           {:cookies session-cookies
+                            :form-params (assoc form-params CSRF-TOKEN-KEY TEST-CSRF-TOKEN)})))))
+
+(defn post-with-test-session
+  "POST request with a test session containing CSRF token."
+  ([url form-params]
+   (post-with-test-session url form-params {}))
+  ([url form-params opts]
+   (let [session-data (create-test-session TEST-CSRF-TOKEN)]
+     (post-with-custom-session url form-params session-data opts))))

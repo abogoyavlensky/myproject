@@ -13,6 +13,7 @@
               (ig-extras/with-system))
 
 (use-fixtures :each
+              ;test-utils/with-mock-csrf-token
               test-utils/with-truncated-tables)
 
 (deftest test-get-login-ok
@@ -67,11 +68,11 @@
         invalid-email "not-an-email"
         
         ;; Try to login with an invalid email format
-        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies url)
-        response (http/post url {:cookies cookies
-                                 :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
-                                               :email invalid-email
-                                               :password "some-password"}})
+        ;response (test-utils/post-with-csrf url {:email invalid-email
+        ;                                         :password "some-password"})
+
+        response (test-utils/post-with-test-session url {:email invalid-email
+                                                         :password "some-password"})
         
         ;; Parse the response body to check for error message
         body (-> response
