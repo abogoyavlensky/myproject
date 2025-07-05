@@ -6,15 +6,14 @@
             [integrant-extras.tests :as ig-extras]
             [myproject.auth.queries :as queries]
             [myproject.db :as db]
-            [myproject.test-utils :as test-utils]
+            [myproject.test-utils :as utils]
             [reitit-extras.tests :as reitit-extras]))
 
 (use-fixtures :once
               (ig-extras/with-system))
 
 (use-fixtures :each
-              ;test-utils/with-mock-csrf-token
-              test-utils/with-truncated-tables)
+              utils/with-truncated-tables)
 
 (deftest test-get-login-ok
   (let [server (:myproject.server/server ig-extras/*test-system*)
@@ -30,7 +29,7 @@
                 (first)
                 :content
                 (first))))
-    (is (= #{(name test-utils/CSRF-TOKEN-KEY) "email" "password"}
+    (is (= #{(name utils/CSRF-TOKEN-FORM-KEY) "email" "password"}
            (->> body
                 (select/select (select/tag :input))
                 (map (comp :name :attrs))
@@ -54,9 +53,10 @@
                                     :password test-password})
 
         ;; Now attempt to login using simplified CSRF handling
-        response (test-utils/post-with-csrf login-url
-                                            {:email test-email
-                                             :password test-password})]
+        response (http/post login-url
+                            ; TODO: think about refactoring to utils/session-cookies
+                            (utils/add-csrf {:form-params {:email test-email
+                                                           :password test-password}}))]
 
     (is (= 200 (:status response)))
     (is (= "/" (get (:headers response) "HX-Redirect")))))
@@ -68,15 +68,11 @@
         invalid-email "not-an-email"
         
         ;; Try to login with an invalid email format
-        ;response (test-utils/post-with-csrf url {:email invalid-email
-        ;                                         :password "some-password"})
-
-        response (test-utils/post-with-custom-session
-                   url
-                   {:email invalid-email
-                    :password "some-password"})
+        params (utils/add-csrf {:form-params {:email invalid-email
+                                              :password "some-password"}})
+        response (http/post url params)
         
-        ;; Parse the response body to check for error message
+        ; Parse the response body to check for error message
         body (-> response
                 :body
                 (hickory/parse)
@@ -95,7 +91,6 @@
 
 (deftest test-post-login-incorrect-password
   (let [server (:myproject.server/server ig-extras/*test-system*)
-        db (::db/db ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
         register-url (str base-url "/register")
         login-url (str base-url "/login")
@@ -103,19 +98,14 @@
         correct-password "password123"
         incorrect-password "wrong-password"
         
-        ;; First register a user
-        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies register-url)
-        _ (http/post register-url {:cookies cookies
-                                   :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
-                                                 :email test-email
-                                                 :password correct-password}})
+        ; First register a user
+        _ (http/post register-url (utils/add-csrf {:form-params {:email test-email
+                                                                 :password correct-password}}))
 
-        ;; Now attempt to login with incorrect password
-        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies login-url)
-        response (http/post login-url {:cookies cookies
-                                       :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
-                                                     :email test-email
-                                                     :password incorrect-password}})
+        ; Now attempt to login with incorrect password
+        response (http/post login-url (utils/add-csrf {:form-params
+                                                       {:email test-email
+                                                        :password incorrect-password}}))
         
         ;; Parse the response body to check for error message
         body (-> response
@@ -141,11 +131,9 @@
         nonexistent-email "nonexistent@example.com"
         
         ;; Attempt to login with a nonexistent user
-        {:keys [csrf-token cookies]} (test-utils/get-csrf-token-and-cookies login-url)
-        response (http/post login-url {:cookies cookies
-                                       :form-params {test-utils/CSRF-TOKEN-KEY csrf-token
-                                                     :email nonexistent-email
-                                                     :password "some-password"}})
+        response (http/post login-url (utils/add-csrf {:form-params
+                                                       {:email nonexistent-email
+                                                        :password "some-password"}}))
         
         ;; Parse the response body to check for error message
         body (-> response

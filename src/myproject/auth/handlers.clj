@@ -50,8 +50,7 @@
 
 (defn post-login
   [{:keys [errors params parameters context]
-    router :reitit.core/router
-    :as request}]
+    router :reitit.core/router}]
   (if (some? errors)
     (ext/render-html (views/login-form {:router router
                                         :values params
