@@ -6,13 +6,15 @@
             [integrant-extras.tests :as ig-extras]
             [reitit-extras.core :as reitit-extras]
             [myproject.db :as db]
+            [ring.util.codec :as codec]
             [ring.middleware.session.cookie :as ring-session-cookie]
             [ring.middleware.session.store :as ring-session-store]
             [ring.middleware.anti-forgery :as anti-forgery]))
 
 (def ^:const CSRF-TOKEN-KEY :__anti-forgery-token)
 (def ^:const CSRF-TOKEN-HEADER "x-csrf-token")
-(def ^:const TEST-CSRF-TOKEN "test-csrf-token-123")
+(def ^:const TEST-CSRF-TOKEN "test-csrf-token")
+(def ^:const TEST-SECRET-KEY "test-secret-key")
 
 (defn- all-tables
   [db]
@@ -138,37 +140,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Custom session
 
-(defn create-session-store
-  "Create a session store using the same configuration as the server."
-  []
-  (ring-session-cookie/cookie-store
-    {:key (reitit-extras/string->16-byte-array "test-secret-key")}))
-
 (defn encrypt-session-to-cookie
   "Encrypt session data to a cookie value using the server's session store."
   [session-data]
-  (let [session-store (create-session-store)]
-    (ring-session-store/write-session session-store nil session-data)))
+  (-> (ring-session-cookie/cookie-store
+        {:key (reitit-extras/string->16-byte-array TEST-SECRET-KEY)})
+    (ring-session-store/write-session nil session-data)
+    (codec/form-encode)))
 
 (defn post-with-custom-session
   "POST request with custom session data."
   [url form-params]
-  (let [session-data {:ring.middleware.anti-forgery/anti-forgery-token TEST-CSRF-TOKEN}
-        encrypted-session-value (ring.util.codec/form-encode (encrypt-session-to-cookie session-data))
-        session-cookies {"ring-session" {:value encrypted-session-value
-                                         :path "/"
-                                         :http-only true
-                                         :secure true}}]
-    (http/post url {:cookies session-cookies
+  (let [session-data {:ring.middleware.anti-forgery/anti-forgery-token TEST-CSRF-TOKEN}]
+    (http/post url {:cookies {"ring-session" {:value (encrypt-session-to-cookie session-data)
+                                              :path "/"
+                                              :http-only true
+                                              :secure true}}
                     :form-params (assoc form-params CSRF-TOKEN-KEY TEST-CSRF-TOKEN)})))
-
-
-(comment
-  ;(def STORE (atom (create-session-store)))
-  (let [store (create-session-store)
-        store2 (create-session-store)
-        session-data {:ring.middleware.anti-forgery/anti-forgery-token TEST-CSRF-TOKEN}
-        ;encrypted (ring-session-store/write-session @STORE nil session-data)
-        encrypted "kvLfPNJ9SxPmW5+0EzIOySrBICuBV9ToADjCmkS8O8fs05W948roisgbq20fj0WYhZIS7tEYphymA3lf18x1CrxTRn87iBB/x77HeI6EPNCiUAzswyreds3aiwfXd2ZA--aGjMTT3EtTvxCCwPdGq9uYxKdwZlTEJjHEhvLYFC9Ps="]))
-    ;(ring.util.codec/form-encode encrypted)))
-    ;(ring-session-store/read-session store2 encrypted)))
