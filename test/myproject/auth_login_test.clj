@@ -71,8 +71,10 @@
         ;response (test-utils/post-with-csrf url {:email invalid-email
         ;                                         :password "some-password"})
 
-        response (test-utils/post-with-test-session url {:email invalid-email
-                                                         :password "some-password"})
+        response (test-utils/post-with-custom-session
+                   url
+                   {:email invalid-email
+                    :password "some-password"})
         
         ;; Parse the response body to check for error message
         body (-> response
