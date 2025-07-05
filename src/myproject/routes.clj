@@ -1,10 +1,10 @@
 (ns myproject.routes
-  (:require [myproject.auth.handlers :as auth-handlers]
-            [myproject.handlers :as handlers]
-            [buddy.auth :as buddy-auth]
+  (:require [buddy.auth :as buddy-auth]
             [buddy.auth.backends :as backends]
             [buddy.auth.middleware :as auth-middleware]
+            [myproject.auth.handlers :as auth-handlers]
             [myproject.auth.spec :as spec]
+            [myproject.handlers :as handlers]
             [reitit-extras.core :as ext]
             [ring.util.response :as response]))
 

@@ -110,7 +110,6 @@
      [:a {:class ["text-indigo-500" "transition" "duration-100" "hover:text-indigo-600" "active:text-indigo-700"]
           :href (ext/get-route router ::routes/register)} "Register"]]]])
 
-
 (defn login-page
   [args]
   (views/base
@@ -168,7 +167,8 @@
     "Update Password"]])
 
 (defn account-page
-  [{:keys [user] :as args}]
+  [{:keys [user]
+    :as args}]
   (views/base
     [:div {:class ["bg-white" "py-6" "sm:py-8" "lg:py-12" "mt-20"]}
      [:nav {:class ["absolute" "top-0" "left-1/4" "p-4"]}
@@ -226,7 +226,9 @@
     :hx-target "#form-reset-password"
     :hx-swap "outerHTML"}
    (ext/csrf-token-html)
-   [:input {:type "hidden" :name "token" :value token}]
+   [:input {:type "hidden"
+            :name "token"
+            :value token}]
    [:div {:class ["flex" "flex-col" "gap-4" "p-4" "md:p-8"]}
     (form-input {:input-name "password"
                  :input-label "New password"
@@ -262,7 +264,8 @@
      [:div {:class ["mx-auto" "max-w-screen-2xl" "px-4" "md:px-8"]}
       [:h2 {:class ["mb-4" "text-center" "text-2xl" "font-bold" "text-gray-800" "md:mb-8" "lg:text-3xl"]} "Reset Your Password"]
       [:p {:class ["text-center" "text-sm" "text-gray-500" "mb-4"]} "Enter a new password for " [:strong email]]
-      (reset-password-form {:router router :token token})]]))
+      (reset-password-form {:router router
+                            :token token})]]))
 
 (defn invalid-reset-token-page
   [{:keys [router]}]

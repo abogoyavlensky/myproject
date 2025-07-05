@@ -10,10 +10,10 @@
             [reitit-extras.tests :as reitit-extras]))
 
 (use-fixtures :once
-              (ig-extras/with-system))
+  (ig-extras/with-system))
 
 (use-fixtures :each
-              utils/with-truncated-tables)
+  utils/with-truncated-tables)
 
 (deftest test-get-login-ok
   (let [server (:myproject.server/server ig-extras/*test-system*)
@@ -66,28 +66,28 @@
         base-url (reitit-extras/get-server-url server :host)
         url (str base-url "/login")
         invalid-email "not-an-email"
-        
+
         ;; Try to login with an invalid email format
         params (utils/add-csrf {:form-params {:email invalid-email
                                               :password "some-password"}})
         response (http/post url params)
-        
+
         ; Parse the response body to check for error message
         body (-> response
-                :body
-                (hickory/parse)
-                (hickory/as-hickory))
+                 :body
+                 (hickory/parse)
+                 (hickory/as-hickory))
         error-messages (select/select (select/class :error-message) body)
         inputs (select/select (select/tag :input) body)]
-    
+
     (is (= 1 (count error-messages)))
     (is (= 200 (:status response)))
     (is (= ["Invalid email format"] (-> error-messages first :content)))
     (is (= invalid-email (->> inputs
-                             (filter #(= "email" (get-in % [:attrs :name])))
-                             first
-                             :attrs
-                             :value)))))
+                              (filter #(= "email" (get-in % [:attrs :name])))
+                              first
+                              :attrs
+                              :value)))))
 
 (deftest test-post-login-incorrect-password
   (let [server (:myproject.server/server ig-extras/*test-system*)
@@ -97,7 +97,7 @@
         test-email "user2@example.com"
         correct-password "password123"
         incorrect-password "wrong-password"
-        
+
         ; First register a user
         _ (http/post register-url (utils/add-csrf {:form-params {:email test-email
                                                                  :password correct-password}}))
@@ -106,48 +106,48 @@
         response (http/post login-url (utils/add-csrf {:form-params
                                                        {:email test-email
                                                         :password incorrect-password}}))
-        
+
         ;; Parse the response body to check for error message
         body (-> response
-                :body
-                (hickory/parse)
-                (hickory/as-hickory))
+                 :body
+                 (hickory/parse)
+                 (hickory/as-hickory))
         error-messages (select/select (select/class :error-message) body)
         inputs (select/select (select/tag :input) body)]
-    
+
     (is (= 1 (count error-messages)))
     (is (= 200 (:status response)))
     (is (= ["Invalid email or password"] (-> error-messages first :content)))
     (is (= test-email (->> inputs
-                          (filter #(= "email" (get-in % [:attrs :name])))
-                          first
-                          :attrs
-                          :value)))))
+                           (filter #(= "email" (get-in % [:attrs :name])))
+                           first
+                           :attrs
+                           :value)))))
 
 (deftest test-post-login-nonexistent-user
   (let [server (:myproject.server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
         login-url (str base-url "/login")
         nonexistent-email "nonexistent@example.com"
-        
+
         ;; Attempt to login with a nonexistent user
         response (http/post login-url (utils/add-csrf {:form-params
                                                        {:email nonexistent-email
                                                         :password "some-password"}}))
-        
+
         ;; Parse the response body to check for error message
         body (-> response
-                :body
-                (hickory/parse)
-                (hickory/as-hickory))
+                 :body
+                 (hickory/parse)
+                 (hickory/as-hickory))
         error-messages (select/select (select/class :error-message) body)
         inputs (select/select (select/tag :input) body)]
-    
+
     (is (= 1 (count error-messages)))
     (is (= 200 (:status response)))
     (is (= ["Invalid email or password"] (-> error-messages first :content)))
     (is (= nonexistent-email (->> inputs
-                                 (filter #(= "email" (get-in % [:attrs :name])))
-                                 first
-                                 :attrs
-                                 :value)))))
+                                  (filter #(= "email" (get-in % [:attrs :name])))
+                                  first
+                                  :attrs
+                                  :value)))))

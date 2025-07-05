@@ -50,7 +50,7 @@
                       "border border-slate-300 dark:border-slate-600 transition-colors duration-200"]
               :href url}
              props)
-      text])
+   text])
 
 (defn home-page
   [{:keys [user]}]

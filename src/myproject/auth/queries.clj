@@ -1,6 +1,6 @@
 (ns myproject.auth.queries
-  (:require [myproject.db :as db]
-            [buddy.hashers :as hashers]))
+  (:require [buddy.hashers :as hashers]
+            [myproject.db :as db]))
 
 (defn create-user!
   [db {:keys [email password]}]

@@ -3,8 +3,8 @@
             [clojure.test :refer :all]
             [hickory.core :as hickory]
             [hickory.select :as select]
-            [myproject.auth.queries :as queries]
             [integrant-extras.tests :as ig-extras]
+            [myproject.auth.queries :as queries]
             [myproject.db :as db]
             [myproject.test-utils :as utils]
             [reitit-extras.tests :as reitit-extras]))
@@ -13,7 +13,7 @@
   (ig-extras/with-system))
 
 (use-fixtures :each
-              utils/with-truncated-tables)
+  utils/with-truncated-tables)
 
 (deftest test-get-account-ok
   (let [server (:myproject.server/server ig-extras/*test-system*)

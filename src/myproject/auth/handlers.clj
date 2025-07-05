@@ -3,8 +3,8 @@
             [buddy.sign.jwt :as jwt]
             [myproject.auth.queries :as queries]
             [myproject.auth.views :as views]
-            [reitit-extras.core :as ext]
             [myproject.routes :as-alias routes]
+            [reitit-extras.core :as ext]
             [ring.util.response :as response])
   (:import [java.sql SQLException]
            [java.time Instant Duration]))
@@ -41,7 +41,6 @@
           (ext/render-html (views/register-form {:router router
                                                  :values params
                                                  :errors {:common ["unexpected server error"]}})))))))
-
 
 (defn get-login
   [{router :reitit.core/router}]
@@ -103,13 +102,13 @@
                                                       :router router
                                                       :values params
                                                       :errors {:current-password ["Current password is incorrect"]}}))
-        
+
         (not= new-password confirm-new-password)
         (ext/render-html (views/change-password-form {:user identity
                                                       :router router
                                                       :values params
                                                       :errors {:common ["New passwords do not match"]}}))
-        
+
         :else
         (let [password-hash (hashers/derive new-password {:alg :bcrypt+sha512})]
           (queries/update-password! (:db context) {:id (:id identity)
@@ -146,9 +145,9 @@
                               "?token=" token)]
           ;; TODO: In production, send this via email instead of printing to console
           (println (str "============================================\n"
-                         "Password Reset Link for: " email "\n"
-                         reset-link "\n"
-                         "============================================\n"))))
+                        "Password Reset Link for: " email "\n"
+                        reset-link "\n"
+                        "============================================\n"))))
       (ext/render-html
         (views/forgot-password-form {:router router
                                      :email-sent? true})))))

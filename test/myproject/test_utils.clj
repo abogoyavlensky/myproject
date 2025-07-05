@@ -1,10 +1,10 @@
 (ns myproject.test-utils
   (:require [integrant-extras.tests :as ig-extras]
-            [reitit-extras.core :as reitit-extras]
             [myproject.db :as db]
-            [ring.util.codec :as codec]
+            [reitit-extras.core :as reitit-extras]
             [ring.middleware.session.cookie :as ring-session-cookie]
-            [ring.middleware.session.store :as ring-session-store]))
+            [ring.middleware.session.store :as ring-session-store]
+            [ring.util.codec :as codec]))
 
 (def ^:const CSRF-TOKEN-FORM-KEY :__anti-forgery-token)
 (def ^:const CSRF-TOKEN-SESSION-KEY :ring.middleware.anti-forgery/anti-forgery-token)
@@ -35,8 +35,8 @@
   [session-data]
   (-> (ring-session-cookie/cookie-store
         {:key (reitit-extras/string->16-byte-array TEST-SECRET-KEY)})
-    (ring-session-store/write-session nil session-data)
-    (codec/form-encode)))
+      (ring-session-store/write-session nil session-data)
+      (codec/form-encode)))
 
 (defn session-cookies
   "Convert session data to cookies for a request."

@@ -1,14 +1,14 @@
 (ns myproject.auth-register-test
-  (:require [clj-http.client :as http]
+  (:require [buddy.hashers :as hashers]
+            [clj-http.client :as http]
             [clojure.test :refer :all]
-            [buddy.hashers :as hashers]
             [hickory.core :as hickory]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
             [myproject.db :as db]
             [myproject.server :as-alias server]
-            [myproject.test-utils :as utils]
             [myproject.test-utils :as test-utils]
+            [myproject.test-utils :as utils]
             [reitit-extras.tests :as reitit-extras]))
 
 (use-fixtures :once
@@ -59,7 +59,7 @@
     (is (true? (:valid (hashers/verify "secret-password" (:password user) {:alg :bcrypt+sha512}))))
     (is (= 200 (:status response)))
     (is (= "/" (get (:headers response) "HX-Redirect")))))
-    
+
 (deftest test-post-register-user-already-exists
   (let [server (::server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
@@ -96,7 +96,7 @@
                            first
                            :attrs
                            :value)))))
-    
+
 (deftest test-post-register-invalid-email
   (let [server (::server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
@@ -118,15 +118,15 @@
         error-messages (select/select (select/class :error-message) body)
         inputs (select/select (select/tag :input) body)]
 
-     (is (= 1 (count error-messages)))
-     (is (= 200 (:status response)))
-     (is (= ["Invalid email format"] (-> error-messages first :content)))
-     (is (= invalid-email (->> inputs
-                               (filter #(= "email" (get-in % [:attrs :name])))
-                               first
-                               :attrs
-                               :value)))))
-     
+    (is (= 1 (count error-messages)))
+    (is (= 200 (:status response)))
+    (is (= ["Invalid email format"] (-> error-messages first :content)))
+    (is (= invalid-email (->> inputs
+                              (filter #(= "email" (get-in % [:attrs :name])))
+                              first
+                              :attrs
+                              :value)))))
+
 (deftest test-post-register-password-too-short
   (let [server (::server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
