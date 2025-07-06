@@ -45,14 +45,3 @@
                    :path "/"
                    :http-only true
                    :secure true}})
-
-(defn add-csrf
-  "Add CSRF token to request options for POST requests."
-  ([request-opts]
-   (add-csrf request-opts {}))
-  ([request-opts session-data]
-   (let [session-data (merge session-data
-                             {:ring.middleware.anti-forgery/anti-forgery-token TEST-CSRF-TOKEN})]
-     (-> request-opts
-         (assoc :cookies (session-cookies session-data))
-         (update :form-params assoc CSRF-TOKEN-FORM-KEY TEST-CSRF-TOKEN)))))

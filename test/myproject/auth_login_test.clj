@@ -52,11 +52,13 @@
         _ (queries/create-user! db {:email test-email
                                     :password test-password})
 
-        ;; Now attempt to login using simplified CSRF handling
+        ; Now attempt to login using
         response (http/post login-url
-                            ; TODO: think about refactoring to utils/session-cookies
-                            (utils/add-csrf {:form-params {:email test-email
-                                                           :password test-password}}))]
+                            {:cookies (utils/session-cookies
+                                        {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                             :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                           :email test-email
+                                           :password test-password}})]
 
     (is (= 200 (:status response)))
     (is (= "/" (get (:headers response) "HX-Redirect")))))
@@ -68,9 +70,11 @@
         invalid-email "not-an-email"
 
         ;; Try to login with an invalid email format
-        params (utils/add-csrf {:form-params {:email invalid-email
-                                              :password "some-password"}})
-        response (http/post url params)
+        response (http/post url {:cookies (utils/session-cookies
+                                            {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                               :email invalid-email
+                                               :password "some-password"}})
 
         ; Parse the response body to check for error message
         body (-> response
@@ -91,21 +95,23 @@
 
 (deftest test-post-login-incorrect-password
   (let [server (:myproject.server/server ig-extras/*test-system*)
+        db (::db/db ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
-        register-url (str base-url "/register")
         login-url (str base-url "/login")
         test-email "user2@example.com"
         correct-password "password123"
         incorrect-password "wrong-password"
 
         ; First register a user
-        _ (http/post register-url (utils/add-csrf {:form-params {:email test-email
-                                                                 :password correct-password}}))
+        _ (queries/create-user! db {:email test-email
+                                    :password correct-password})
 
         ; Now attempt to login with incorrect password
-        response (http/post login-url (utils/add-csrf {:form-params
-                                                       {:email test-email
-                                                        :password incorrect-password}}))
+        response (http/post login-url {:cookies (utils/session-cookies
+                                                  {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                                       :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                                     :email test-email
+                                                     :password incorrect-password}})
 
         ;; Parse the response body to check for error message
         body (-> response
@@ -131,9 +137,11 @@
         nonexistent-email "nonexistent@example.com"
 
         ;; Attempt to login with a nonexistent user
-        response (http/post login-url (utils/add-csrf {:form-params
-                                                       {:email nonexistent-email
-                                                        :password "some-password"}}))
+        response (http/post login-url {:cookies (utils/session-cookies
+                                                  {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                                       :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                                     :email nonexistent-email
+                                                     :password "some-password"}})
 
         ;; Parse the response body to check for error message
         body (-> response

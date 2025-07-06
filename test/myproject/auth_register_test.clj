@@ -7,7 +7,6 @@
             [integrant-extras.tests :as ig-extras]
             [myproject.db :as db]
             [myproject.server :as-alias server]
-            [myproject.test-utils :as test-utils]
             [myproject.test-utils :as utils]
             [reitit-extras.tests :as reitit-extras]))
 
@@ -15,7 +14,7 @@
   (ig-extras/with-system))
 
 (use-fixtures :each
-  test-utils/with-truncated-tables)
+  utils/with-truncated-tables)
 
 (deftest test-get-register-ok
   (let [server (::server/server ig-extras/*test-system*)
@@ -49,7 +48,7 @@
         url (str base-url "/register")
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {test-utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :email "user@gmail.com"
                                                :password "secret-password"}})
         user (db/exec-one! db {:select [:email :password]
@@ -69,14 +68,14 @@
         ; First, register a user to create the existing account
         _ (http/post url {:cookies (utils/session-cookies
                                      {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                          :form-params {test-utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                          :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                         :email test-email
                                         :password "first-password"}})
 
         ; Now try to register again with the same email
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {test-utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :email test-email
                                                :password "second-password"}})
 
@@ -106,7 +105,7 @@
         ;; Try to register with an invalid email format
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {test-utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :email invalid-email
                                                :password "some-password"}})
 
@@ -137,7 +136,7 @@
         ;; Try to register with a password that's too short
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {test-utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :email test-email
                                                :password short-password}})
 
