@@ -115,20 +115,20 @@
 
     ; Check form structure
     (is (= 200 (:status response)))
-    
+
     ; Verify change password form exists
     (let [form (->> body
-                   (select/select (select/tag :form))
-                   (filter #(= "/account/change-password" (get-in % [:attrs :hx-post])))
-                   (first))]
+                    (select/select (select/tag :form))
+                    (filter #(= "/account/change-password" (get-in % [:attrs :hx-post])))
+                    (first))]
       (is (some? form))
       (is (= "form-change-password" (get-in form [:attrs :id]))))
-    
+
     ; Verify form has required fields
     (let [inputs (->> body
-                     (select/select (select/tag :input))
-                     (map (comp :name :attrs))
-                     (set))]
+                      (select/select (select/tag :input))
+                      (map (comp :name :attrs))
+                      (set))]
       (is (contains? inputs "current-password"))
       (is (contains? inputs "new-password"))
       (is (contains? inputs "confirm-new-password"))
@@ -150,13 +150,13 @@
         ; Submit password change with wrong current password
         change-password-url (str base-url "/account/change-password")
         response (http/post change-password-url
-                           {:cookies (utils/session-cookies
-                                       {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
-                                        :identity user})
-                            :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                          :current-password wrong-password
-                                          :new-password new-password
-                                          :confirm-new-password new-password}})
+                            {:cookies (utils/session-cookies
+                                        {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
+                                         :identity user})
+                             :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                           :current-password wrong-password
+                                           :new-password new-password
+                                           :confirm-new-password new-password}})
 
         ; Parse response to check for error message
         body (-> response
@@ -186,13 +186,13 @@
         ; Submit password change with mismatched passwords
         change-password-url (str base-url "/account/change-password")
         response (http/post change-password-url
-                           {:cookies (utils/session-cookies
-                                       {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
-                                        :identity user})
-                            :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                          :current-password current-password
-                                          :new-password new-password
-                                          :confirm-new-password different-password}})
+                            {:cookies (utils/session-cookies
+                                        {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
+                                         :identity user})
+                             :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                           :current-password current-password
+                                           :new-password new-password
+                                           :confirm-new-password different-password}})
 
         ; Parse response to check for error message
         body (-> response
@@ -220,12 +220,12 @@
         ; Submit password change with missing new password
         change-password-url (str base-url "/account/change-password")
         response (http/post change-password-url
-                           {:cookies (utils/session-cookies
-                                       {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
-                                        :identity user})
-                            :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                          :current-password current-password
-                                          :confirm-new-password "some-password"}})
+                            {:cookies (utils/session-cookies
+                                        {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
+                                         :identity user})
+                             :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                           :current-password current-password
+                                           :confirm-new-password "some-password"}})
 
         ; Parse response to check for error message
         body (-> response
@@ -253,13 +253,13 @@
         ; Submit password change with too short password
         change-password-url (str base-url "/account/change-password")
         response (http/post change-password-url
-                           {:cookies (utils/session-cookies
-                                       {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
-                                        :identity user})
-                            :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                          :current-password current-password
-                                          :new-password short-password
-                                          :confirm-new-password short-password}})
+                            {:cookies (utils/session-cookies
+                                        {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
+                                         :identity user})
+                             :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                           :current-password current-password
+                                           :new-password short-password
+                                           :confirm-new-password short-password}})
 
         ; Parse response to check for error message
         body (-> response
@@ -279,13 +279,13 @@
 
         ; Try to change password without authentication
         response (http/post change-password-url
-                           {:redirect-strategy :none
-                            :cookies (utils/session-cookies
-                                       {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                            :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                          :current-password "current"
-                                          :new-password "new"
-                                          :confirm-new-password "new"}})]
+                            {:redirect-strategy :none
+                             :cookies (utils/session-cookies
+                                        {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                             :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                           :current-password "current"
+                                           :new-password "new"
+                                           :confirm-new-password "new"}})]
 
     ; Should get a redirect to login page
     (is (= 302 (:status response)))

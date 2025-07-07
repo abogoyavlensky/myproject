@@ -167,11 +167,11 @@
         login-url (str base-url "/login")
         test-email "user@example.com"
         test-password "password123"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password test-password})
-        
+
         ; Try to access login page while already logged in
         response (http/get login-url {:redirect-strategy :none
                                       :cookies (utils/session-cookies {:identity user})})]
@@ -251,11 +251,11 @@
         logout-url (str base-url "/logout")
         test-email "user@example.com"
         test-password "password123"
-        
+
         ;; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password test-password})
-        
+
         ;; Logout while logged in
         response (http/post logout-url {:cookies (utils/session-cookies
                                                    {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
@@ -270,7 +270,7 @@
   (let [server (:myproject.server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
         logout-url (str base-url "/logout")
-        
+
         ;; Try to logout without being logged in
         response (http/post logout-url {:cookies (utils/session-cookies
                                                    {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
