@@ -24,27 +24,27 @@
                  (hickory/parse)
                  (hickory/as-hickory))]
 
-    ; Check page title and form structure
-    (is (= "Forgot your password?"
-           (->> body
-                (select/select (select/tag :h2))
-                (first)
-                :content
-                (first))))
+    (testing "Check page title and form structure"
+      (is (= "Forgot your password?"
+             (->> body
+                  (select/select (select/tag :h2))
+                  (first)
+                  :content
+                  (first)))))
 
-    ; Check form has required fields
-    (is (= #{(name utils/CSRF-TOKEN-FORM-KEY) "email"}
-           (->> body
-                (select/select (select/tag :input))
-                (map (comp :name :attrs))
-                (set))))
+    (testing "Check form has required fields"
+      (is (= #{(name utils/CSRF-TOKEN-FORM-KEY) "email"}
+             (->> body
+                  (select/select (select/tag :input))
+                  (map (comp :name :attrs))
+                  (set)))))
 
-    ; Check form properties
-    (is (= {:hx-post "/forgot-password"
-            :hx-target "#form-forgot-password"
-            :id "form-forgot-password"}
-           (dissoc (->> body (select/select (select/tag :form)) first :attrs)
-                   :class :hx-swap)))))
+    (testing "Check form properties"
+      (is (= {:hx-post "/forgot-password"
+              :hx-target "#form-forgot-password"
+              :id "form-forgot-password"}
+             (dissoc (->> body (select/select (select/tag :form)) first :attrs)
+                     :class :hx-swap))))))
 
 (deftest test-get-forgot-password-already-logged-in
   (let [server (:myproject.server/server ig-extras/*test-system*)
@@ -53,12 +53,8 @@
         url (str base-url "/forgot-password")
         test-email "user@example.com"
         test-password "password123"
-
-        ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password test-password})
-
-        ; Try to access forgot password page while already logged in
         response (http/get url {:redirect-strategy :none
                                 :cookies (utils/session-cookies {:identity user})})]
 
@@ -73,42 +69,32 @@
         url (str base-url "/forgot-password")
         test-email "user@example.com"
         test-password "password123"
-
-        ; Create a user for testing
         _ (queries/create-user! db {:email test-email
                                     :password test-password})
-
-        ; Submit forgot password request
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :email test-email}})
-
-        ; Parse response body
         body (-> response
                  :body
                  (hickory/parse)
                  (hickory/as-hickory))]
 
-    ; Should show success message regardless of user existence
-    (is (= 200 (:status response)))
-    (is (some? (->> body
-                    (select/select (select/find-in-text #"Check your email.*"))
-                    (first))))))
+    (testing "Should show success message regardless of user existence"
+      (is (= 200 (:status response)))
+      (is (some? (->> body
+                      (select/select (select/find-in-text #"Check your email.*"))
+                      (first)))))))
 
 (deftest test-post-forgot-password-nonexistent-email
   (let [server (:myproject.server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
         url (str base-url "/forgot-password")
         nonexistent-email "nonexistent@example.com"
-
-        ; Submit forgot password request for nonexistent user
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :email nonexistent-email}})
-
-        ; Parse response body
         body (-> response
                  :body
                  (hickory/parse)
