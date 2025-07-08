@@ -21,13 +21,13 @@
         base-url (reitit-extras/get-server-url server :host)
         test-email "user@example.com"
         test-password "password123"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password test-password})
         token (utils/create-test-token test-email (:id user))
         url (str base-url "/reset-password?token=" token)
-        
+
         ; Request reset password page with valid token
         response (http/get url)
         body (-> response
@@ -37,7 +37,7 @@
 
     ; Should show reset password form
     (is (= 200 (:status response)))
-    
+
     ; Check page title
     (is (= "Reset Your Password"
            (->> body
@@ -45,17 +45,17 @@
                 (first)
                 :content
                 (first))))
-    
+
     ; Check form has required fields
     (let [inputs (->> body
-                     (select/select (select/tag :input))
-                     (map (comp :name :attrs))
-                     (set))]
+                      (select/select (select/tag :input))
+                      (map (comp :name :attrs))
+                      (set))]
       (is (contains? inputs "password"))
       (is (contains? inputs "confirm-password"))
       (is (contains? inputs "token"))
       (is (contains? inputs (name utils/CSRF-TOKEN-FORM-KEY))))
-    
+
     ; Check email is displayed
     (is (some? (->> body
                     (select/select (select/find-in-text #".*user@example.com.*"))
@@ -66,7 +66,7 @@
         base-url (reitit-extras/get-server-url server :host)
         invalid-token "invalid.jwt.token"
         url (str base-url "/reset-password?token=" invalid-token)
-        
+
         ; Request reset password page with invalid token
         response (http/get url {:throw-exceptions false})
         body (-> response
@@ -86,13 +86,13 @@
         base-url (reitit-extras/get-server-url server :host)
         test-email "user@example.com"
         test-password "password123"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password test-password})
         expired-token (utils/create-expired-token test-email (:id user))
         url (str base-url "/reset-password?token=" expired-token)
-        
+
         ; Request reset password page with expired token
         response (http/get url {:throw-exceptions false})]
 
@@ -103,7 +103,7 @@
   (let [server (:myproject.server/server ig-extras/*test-system*)
         base-url (reitit-extras/get-server-url server :host)
         url (str base-url "/reset-password")
-        
+
         ; Request reset password page without token parameter
         response (http/get url {:throw-exceptions false})]
 
@@ -116,13 +116,13 @@
         base-url (reitit-extras/get-server-url server :host)
         test-email "user@example.com"
         test-password "password123"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password test-password})
         token (utils/create-test-token test-email (:id user))
         url (str base-url "/reset-password?token=" token)
-        
+
         ; Try to access reset password page while already logged in
         response (http/get url {:redirect-strategy :none
                                 :cookies (utils/session-cookies {:identity user})})]
@@ -140,12 +140,12 @@
         test-email "user@example.com"
         original-password "original-password"
         new-password "new-secure-password"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password original-password})
         token (utils/create-test-token test-email (:id user))
-        
+
         ; Submit password reset
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
@@ -153,7 +153,7 @@
                                                :password new-password
                                                :confirm-password new-password
                                                :token token}})
-        
+
         ; Parse response body
         body (-> response
                  :body
@@ -165,7 +165,7 @@
     (is (some? (->> body
                     (select/select (select/find-in-text #".*Password Reset Successful.*"))
                     (first))))
-    
+
     ; Verify password was actually changed in database
     (let [updated-user (queries/get-user db test-email)]
       (is (not= (:password user) (:password updated-user))))))
@@ -176,7 +176,7 @@
         url (str base-url "/reset-password")
         invalid-token "invalid-jwt-token"
         new-password "new-secure-password"
-        
+
         ; Submit password reset with invalid token
         response (http/post url {:throw-exceptions false
                                  :cookies (utils/session-cookies
@@ -185,7 +185,7 @@
                                                :password new-password
                                                :confirm-password new-password
                                                :token invalid-token}})
-        
+
         ; Parse response body
         body (-> response
                  :body
@@ -206,12 +206,12 @@
         test-email "user@example.com"
         original-password "original-password"
         new-password "new-secure-password"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password original-password})
         expired-token (utils/create-expired-token test-email (:id user))
-        
+
         ; Submit password reset with expired token
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
@@ -239,12 +239,12 @@
         original-password "original-password"
         new-password "new-secure-password"
         different-password "different-password"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password original-password})
         token (utils/create-test-token test-email (:id user))
-        
+
         ; Submit password reset with mismatched passwords
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
@@ -252,7 +252,7 @@
                                                :password new-password
                                                :confirm-password different-password
                                                :token token}})
-        
+
         ; Parse response body to check for error message
         body (-> response
                  :body
@@ -273,12 +273,12 @@
         test-email "user@example.com"
         original-password "original-password"
         short-password "123"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password original-password})
         token (utils/create-test-token test-email (:id user))
-        
+
         ; Submit password reset with too short password
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
@@ -286,7 +286,7 @@
                                                :password short-password
                                                :confirm-password short-password
                                                :token token}})
-        
+
         ; Parse response body to check for error message
         body (-> response
                  :body
@@ -305,19 +305,19 @@
         url (str base-url "/reset-password")
         test-email "user@example.com"
         original-password "original-password"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password original-password})
         token (utils/create-test-token test-email (:id user))
-        
+
         ; Submit password reset with missing password field
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :confirm-password "some-password"
                                                :token token}})
-        
+
         ; Parse response body to check for error message
         body (-> response
                  :body

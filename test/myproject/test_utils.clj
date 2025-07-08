@@ -1,7 +1,7 @@
 (ns myproject.test-utils
-  (:require [integrant-extras.tests :as ig-extras]
+  (:require [buddy.sign.jwt :as jwt]
+            [integrant-extras.tests :as ig-extras]
             [myproject.db :as db]
-            [buddy.sign.jwt :as jwt]
             [reitit-extras.core :as reitit-extras]
             [ring.middleware.session.cookie :as ring-session-cookie]
             [ring.middleware.session.store :as ring-session-store]

@@ -23,7 +23,7 @@
                  :body
                  (hickory/parse)
                  (hickory/as-hickory))]
-    
+
     ; Check page title and form structure
     (is (= "Forgot your password?"
            (->> body
@@ -31,14 +31,14 @@
                 (first)
                 :content
                 (first))))
-    
+
     ; Check form has required fields
     (is (= #{(name utils/CSRF-TOKEN-FORM-KEY) "email"}
            (->> body
                 (select/select (select/tag :input))
                 (map (comp :name :attrs))
                 (set))))
-    
+
     ; Check form properties
     (is (= {:hx-post "/forgot-password"
             :hx-target "#form-forgot-password"
@@ -53,11 +53,11 @@
         url (str base-url "/forgot-password")
         test-email "user@example.com"
         test-password "password123"
-        
+
         ; Create a user for testing
         user (queries/create-user! db {:email test-email
                                        :password test-password})
-        
+
         ; Try to access forgot password page while already logged in
         response (http/get url {:redirect-strategy :none
                                 :cookies (utils/session-cookies {:identity user})})]
