@@ -1,10 +1,12 @@
 (ns myproject.test-utils
   (:require [integrant-extras.tests :as ig-extras]
             [myproject.db :as db]
+            [buddy.sign.jwt :as jwt]
             [reitit-extras.core :as reitit-extras]
             [ring.middleware.session.cookie :as ring-session-cookie]
             [ring.middleware.session.store :as ring-session-store]
-            [ring.util.codec :as codec]))
+            [ring.util.codec :as codec])
+  (:import [java.time Instant Duration]))
 
 (def ^:const CSRF-TOKEN-FORM-KEY :__anti-forgery-token)
 (def ^:const CSRF-TOKEN-SESSION-KEY :ring.middleware.anti-forgery/anti-forgery-token)
@@ -45,3 +47,22 @@
                    :path "/"
                    :http-only true
                    :secure true}})
+
+; Helper function to create valid JWT tokens for testing
+(defn create-test-token
+  ([email user-id] (create-test-token email user-id 24))
+  ([email user-id hours-valid]
+   (let [now (Instant/now)
+         claims {:sub user-id
+                 :email email
+                 :exp (.getEpochSecond (.plus now (Duration/ofHours hours-valid)))
+                 :iat (.getEpochSecond now)}]
+     (jwt/sign claims TEST-SECRET-KEY {:alg :hs256}))))
+
+(defn create-expired-token [email user-id]
+  (let [past-time (Instant/parse "2020-01-01T00:00:00Z")
+        claims {:sub user-id
+                :email email
+                :exp (.getEpochSecond past-time)
+                :iat (.getEpochSecond past-time)}]
+    (jwt/sign claims TEST-SECRET-KEY {:alg :hs256})))
