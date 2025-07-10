@@ -1,21 +1,20 @@
 (ns myproject.test-utils
-  (:require [buddy.sign.jwt :as jwt]
-            [integrant-extras.tests :as ig-extras]
+  (:require [integrant-extras.tests :as ig-extras]
+            [hickory.core :as hickory]
             [myproject.db :as db]
+            [myproject.server :as server]
             [reitit-extras.core :as reitit-extras]
             [ring.middleware.session.cookie :as ring-session-cookie]
             [ring.middleware.session.store :as ring-session-store]
-            [ring.util.codec :as codec])
-  (:import [java.time Instant Duration]))
+            [ring.util.codec :as codec]))
 
 (def ^:const CSRF-TOKEN-FORM-KEY :__anti-forgery-token)
 (def ^:const CSRF-TOKEN-SESSION-KEY :ring.middleware.anti-forgery/anti-forgery-token)
-; TODO: maybe remove
-(def ^:const CSRF-TOKEN-HEADER "x-csrf-token")
 (def ^:const TEST-CSRF-TOKEN "test-csrf-token")
 (def ^:const TEST-SECRET-KEY "test-secret-key")
 
 (defn- all-tables
+  "Get a list of all tables in the database, excluding the migrations table."
   [db]
   (->> {:select [:name]
         :from [:sqlite_master]
@@ -24,7 +23,7 @@
        (map (comp keyword :name))))
 
 (defn with-truncated-tables
-  "Remove all data from all tables."
+  "Remove all data from all tables except migrations."
   [f]
   (let [db (::db/db ig-extras/*test-system*)]
     (doseq [table (all-tables db)
@@ -48,21 +47,20 @@
                    :http-only true
                    :secure true}})
 
-; Helper function to create valid JWT tokens for testing
-(defn create-test-token
-  ([email user-id] (create-test-token email user-id 24))
-  ([email user-id hours-valid]
-   (let [now (Instant/now)
-         claims {:sub user-id
-                 :email email
-                 :exp (.getEpochSecond (.plus now (Duration/ofHours hours-valid)))
-                 :iat (.getEpochSecond now)}]
-     (jwt/sign claims TEST-SECRET-KEY {:alg :hs256}))))
+(defn response->hickory
+  "Convert a Ring response body to a Hickory document."
+  [response]
+  (-> response
+      :body
+      (hickory/parse)
+      (hickory/as-hickory)))
 
-(defn create-expired-token [email user-id]
-  (let [past-time (Instant/parse "2020-01-01T00:00:00Z")
-        claims {:sub user-id
-                :email email
-                :exp (.getEpochSecond past-time)
-                :iat (.getEpochSecond past-time)}]
-    (jwt/sign claims TEST-SECRET-KEY {:alg :hs256})))
+(defn db
+  "Get the database connection from the test system."
+  []
+  (::db/db ig-extras/*test-system*))
+
+(defn server
+  "Get the server instance from the test system."
+  []
+  (::server/server ig-extras/*test-system*))

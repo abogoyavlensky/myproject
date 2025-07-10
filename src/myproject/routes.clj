@@ -78,17 +78,18 @@
                                 :responses {200 {:body string?}}}}]
      ["/logout" {:name ::logout
                  :post {:handler auth-handlers/post-logout}}]
-     ["/account" {:name ::account
-                  :middleware [[auth-middleware/wrap-authentication auth-backend]
-                               wrap-login-required]
-                  :get {:handler auth-handlers/get-account
-                        :responses {200 {:body string?}}}}]
-     ["/account/change-password" {:name ::change-password
-                                  :middleware [[auth-middleware/wrap-authentication auth-backend]
-                                               wrap-login-required]
-                                  :post {:handler auth-handlers/post-change-password
-                                         :parameters {:form [:map
-                                                             [:current-password [:string {:min 1}]]
-                                                             [:new-password [:string {:min 8}]]
-                                                             [:confirm-new-password [:string {:min 8}]]]}
-                                         :responses {200 {:body string?}}}}]]))
+     ["/account"
+      ["" {:name ::account
+           :middleware [[auth-middleware/wrap-authentication auth-backend]
+                        wrap-login-required]
+           :get {:handler auth-handlers/get-account
+                 :responses {200 {:body string?}}}}]
+      ["/change-password" {:name ::change-password
+                           :middleware [[auth-middleware/wrap-authentication auth-backend]
+                                        wrap-login-required]
+                           :post {:handler auth-handlers/post-change-password
+                                  :parameters {:form [:map
+                                                      [:current-password [:string {:min 1}]]
+                                                      [:new-password [:string {:min 8}]]
+                                                      [:confirm-new-password [:string {:min 8}]]]}
+                                  :responses {200 {:body string?}}}}]]]))
