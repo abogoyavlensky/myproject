@@ -68,7 +68,7 @@
                       (first)))))))
 
 (deftest test-get-reset-password-invalid-token
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         invalid-token "invalid.jwt.token"
         url (str base-url "/reset-password?token=" invalid-token)
         response (http/get url {:throw-exceptions false})]
@@ -80,7 +80,7 @@
                       (first)))))))
 
 (deftest test-get-reset-password-expired-token
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         test-email "user@example.com"
         test-password "password123"
         user (queries/create-user! (utils/db) {:email test-email
@@ -95,7 +95,7 @@
                     (first))))))
 
 (deftest test-get-reset-password-missing-token
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/reset-password")
         response (http/get url {:throw-exceptions false})]
     (is (= 400 (:status response)))
@@ -106,7 +106,7 @@
                     (first))))))
 
 (deftest test-get-reset-password-already-logged-in
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         test-email "user@example.com"
         user (queries/create-user! (utils/db) {:email test-email
                                                :password "password123"})
@@ -118,7 +118,7 @@
     (is (= "/" (get-in response [:headers "Location"])))))
 
 (deftest test-post-reset-password-valid
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/reset-password")
         test-email "user@example.com"
         new-password "new-secure-password"
@@ -142,7 +142,7 @@
         (is (not= (:password user) (:password updated-user)))))))
 
 (deftest test-post-reset-password-invalid-token
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/reset-password")
         new-password "new-secure-password"
         response (http/post url {:throw-exceptions false
@@ -158,7 +158,7 @@
                     (first))))))
 
 (deftest test-post-reset-password-expired-token
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/reset-password")
         test-email "user@example.com"
         original-password "original-password"
@@ -178,7 +178,7 @@
                     (first))))))
 
 (deftest test-post-reset-password-mismatch
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/reset-password")
         test-email "user@example.com"
         user (queries/create-user! (utils/db) {:email test-email
@@ -197,7 +197,7 @@
     (is (= ["Passwords do not match"] (-> error-messages first :content)))))
 
 (deftest test-post-reset-password-too-short
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/reset-password")
         test-email "user@example.com"
         short-password "123"
@@ -216,7 +216,7 @@
     (is (pos? (count error-messages)))))
 
 (deftest test-post-reset-password-missing-fields
-  (let [base-url (reitit-extras/get-server-url (utils/server) :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/reset-password")
         test-email "user@example.com"
         user (queries/create-user! (utils/db) {:email test-email

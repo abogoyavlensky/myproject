@@ -1,11 +1,9 @@
 (ns myproject.auth-forgot-password-test
   (:require [clj-http.client :as http]
             [clojure.test :refer :all]
-            [hickory.core :as hickory]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
             [myproject.auth.queries :as queries]
-            [myproject.db :as db]
             [myproject.test-utils :as utils]
             [reitit-extras.tests :as reitit-extras]))
 
@@ -16,14 +14,9 @@
   utils/with-truncated-tables)
 
 (deftest test-get-forgot-password-ok
-  (let [server (:myproject.server/server ig-extras/*test-system*)
-        base-url (reitit-extras/get-server-url server :host)
-        url (str base-url "/forgot-password")
-        body (-> (http/get url)
-                 :body
-                 (hickory/parse)
-                 (hickory/as-hickory))]
-
+  (let [base-url (reitit-extras/get-server-url (utils/server))
+        response (http/get (str base-url "/forgot-password"))
+        body (utils/response->hickory response)]
     (testing "Check page title and form structure"
       (is (= "Forgot your password?"
              (->> body
@@ -47,14 +40,10 @@
                      :class :hx-swap))))))
 
 (deftest test-get-forgot-password-already-logged-in
-  (let [server (:myproject.server/server ig-extras/*test-system*)
-        db (::db/db ig-extras/*test-system*)
-        base-url (reitit-extras/get-server-url server :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/forgot-password")
-        test-email "user@example.com"
-        test-password "password123"
-        user (queries/create-user! db {:email test-email
-                                       :password test-password})
+        user (queries/create-user! (utils/db) {:email "user@example.com"
+                                               :password "password123"})
         response (http/get url {:redirect-strategy :none
                                 :cookies (utils/session-cookies {:identity user})})]
 
@@ -63,69 +52,45 @@
       (is (= "/" (get-in response [:headers "Location"]))))))
 
 (deftest test-post-forgot-password-valid-email
-  (let [server (:myproject.server/server ig-extras/*test-system*)
-        db (::db/db ig-extras/*test-system*)
-        base-url (reitit-extras/get-server-url server :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/forgot-password")
         test-email "user@example.com"
-        test-password "password123"
-        _ (queries/create-user! db {:email test-email
-                                    :password test-password})
+        _ (queries/create-user! (utils/db) {:email test-email
+                                            :password "password123"})
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                               :email test-email}})
-        body (-> response
-                 :body
-                 (hickory/parse)
-                 (hickory/as-hickory))]
+                                               :email test-email}})]
 
     (testing "Should show success message regardless of user existence"
       (is (= 200 (:status response)))
-      (is (some? (->> body
+      (is (some? (->> (utils/response->hickory response)
                       (select/select (select/find-in-text #"Check your email.*"))
                       (first)))))))
 
 (deftest test-post-forgot-password-nonexistent-email
-  (let [server (:myproject.server/server ig-extras/*test-system*)
-        base-url (reitit-extras/get-server-url server :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/forgot-password")
-        nonexistent-email "nonexistent@example.com"
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                               :email nonexistent-email}})
-        body (-> response
-                 :body
-                 (hickory/parse)
-                 (hickory/as-hickory))]
-
-    ; Should still show success message (security best practice)
+                                               :email "nonexistent@example.com"}})]
     (is (= 200 (:status response)))
-    (is (some? (->> body
+    (is (some? (->> (utils/response->hickory response)
                     (select/select (select/find-in-text #"Check your email.*"))
                     (first))))))
 
 (deftest test-post-forgot-password-invalid-email
-  (let [server (:myproject.server/server ig-extras/*test-system*)
-        base-url (reitit-extras/get-server-url server :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/forgot-password")
         invalid-email "not-an-email"
-
-        ; Try to submit with invalid email format
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
                                                :email invalid-email}})
-
-        ; Parse response body to check for error message
-        body (-> response
-                 :body
-                 (hickory/parse)
-                 (hickory/as-hickory))
+        body (utils/response->hickory response)
         error-messages (select/select (select/class :error-message) body)
         inputs (select/select (select/tag :input) body)]
-
     (is (= 1 (count error-messages)))
     (is (= 200 (:status response)))
     (is (= ["Invalid email format"] (-> error-messages first :content)))
@@ -136,42 +101,25 @@
                               :value)))))
 
 (deftest test-post-forgot-password-missing-email
-  (let [server (:myproject.server/server ig-extras/*test-system*)
-        base-url (reitit-extras/get-server-url server :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/forgot-password")
-
-        ; Try to submit without email
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN}})
-
-        ; Parse response body to check for error message
-        body (-> response
-                 :body
-                 (hickory/parse)
-                 (hickory/as-hickory))
-        error-messages (select/select (select/class :error-message) body)]
-
+        error-messages (->> response
+                            (utils/response->hickory)
+                            (select/select (select/class :error-message)))]
     (is (= 200 (:status response)))
     (is (pos? (count error-messages)))))
 
 (deftest test-post-forgot-password-empty-email
-  (let [server (:myproject.server/server ig-extras/*test-system*)
-        base-url (reitit-extras/get-server-url server :host)
+  (let [base-url (reitit-extras/get-server-url (utils/server))
         url (str base-url "/forgot-password")
-
-        ; Try to submit with empty email
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                               :email ""}})
-
-        ; Parse response body to check for error message
-        body (-> response
-                 :body
-                 (hickory/parse)
-                 (hickory/as-hickory))
-        error-messages (select/select (select/class :error-message) body)]
-
+                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN}})
+        error-messages (->> response
+                            (utils/response->hickory)
+                            (select/select (select/class :error-message)))]
     (is (= 200 (:status response)))
     (is (pos? (count error-messages)))))

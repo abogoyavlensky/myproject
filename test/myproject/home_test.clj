@@ -1,28 +1,23 @@
 (ns myproject.home-test
   (:require [clj-http.client :as http]
             [clojure.test :refer :all]
-            [hickory.core :as hickory]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
             [myproject.server :as-alias server]
-            [myproject.test-utils :as test-utils]
+            [myproject.test-utils :as utils]
             [reitit-extras.tests :as reitit-extras]))
 
 (use-fixtures :once
   (ig-extras/with-system))
 
 (use-fixtures :each
-  test-utils/with-truncated-tables)
+  utils/with-truncated-tables)
 
 (deftest test-home-page-is-loaded-correctly
-  (let [server (::server/server ig-extras/*test-system*)
-        url (reitit-extras/get-server-url server :host)
-        body (-> (http/get url)
-                 :body
-                 (hickory/parse)
-                 (hickory/as-hickory))]
+  (let [url (reitit-extras/get-server-url (utils/server))
+        response (http/get url)]
     (is (= "Clojure Stack Lite"
-           (->> body
+           (->> (utils/response->hickory response)
                 (select/select (select/tag :span))
                 (first)
                 :content
