@@ -40,7 +40,7 @@
         account-url (str base-url "/account")
         response (http/get account-url {:redirect-strategy :none})]
     (is (= 302 (:status response)))
-    (is (= "/login" (get-in response [:headers "Location"])))))
+    (is (= "/auth/login" (get-in response [:headers "Location"])))))
 
 (deftest test-post-change-password-ok
   (let [base-url (reitit-extras/get-server-url (utils/server))
@@ -185,4 +185,4 @@
                                            :new-password "new"
                                            :confirm-new-password "new"}})]
     (is (= 302 (:status response)))
-    (is (= "/login" (get-in response [:headers "Location"])))))
+    (is (= "/auth/login" (get-in response [:headers "Location"])))))

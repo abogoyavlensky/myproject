@@ -39,7 +39,7 @@
         user (queries/create-user! (utils/db) {:email test-email
                                                :password "password123"})
         token (create-test-token test-email (:id user))
-        url (str base-url "/reset-password?token=" token)
+        url (str base-url "/auth/reset-password?token=" token)
         response (http/get url)
         body (utils/response->hickory response)]
 
@@ -70,7 +70,7 @@
 (deftest test-get-reset-password-invalid-token
   (let [base-url (reitit-extras/get-server-url (utils/server))
         invalid-token "invalid.jwt.token"
-        url (str base-url "/reset-password?token=" invalid-token)
+        url (str base-url "/auth/reset-password?token=" invalid-token)
         response (http/get url {:throw-exceptions false})]
 
     (testing "Should show error page with 400 status"
@@ -86,7 +86,7 @@
         user (queries/create-user! (utils/db) {:email test-email
                                                :password test-password})
         expired-token (create-expired-token test-email (:id user))
-        url (str base-url "/reset-password?token=" expired-token)
+        url (str base-url "/auth/reset-password?token=" expired-token)
         response (http/get url {:throw-exceptions false})]
 
     (is (= 400 (:status response)))
@@ -96,7 +96,7 @@
 
 (deftest test-get-reset-password-missing-token
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/reset-password")
+        url (str base-url "/auth/reset-password")
         response (http/get url {:throw-exceptions false})]
     (is (= 400 (:status response)))
     (is (some? (->> (utils/response->hickory response)
@@ -111,7 +111,7 @@
         user (queries/create-user! (utils/db) {:email test-email
                                                :password "password123"})
         token (create-test-token test-email (:id user))
-        url (str base-url "/reset-password?token=" token)
+        url (str base-url "/auth/reset-password?token=" token)
         response (http/get url {:redirect-strategy :none
                                 :cookies (utils/session-cookies {:identity user})})]
     (is (= 302 (:status response)))
@@ -119,7 +119,7 @@
 
 (deftest test-post-reset-password-valid
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/reset-password")
+        url (str base-url "/auth/reset-password")
         test-email "user@example.com"
         new-password "new-secure-password"
         user (queries/create-user! (utils/db) {:email test-email
@@ -143,7 +143,7 @@
 
 (deftest test-post-reset-password-invalid-token
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/reset-password")
+        url (str base-url "/auth/reset-password")
         new-password "new-secure-password"
         response (http/post url {:throw-exceptions false
                                  :cookies (utils/session-cookies
@@ -159,7 +159,7 @@
 
 (deftest test-post-reset-password-expired-token
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/reset-password")
+        url (str base-url "/auth/reset-password")
         test-email "user@example.com"
         original-password "original-password"
         new-password "new-secure-password"
@@ -179,7 +179,7 @@
 
 (deftest test-post-reset-password-mismatch
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/reset-password")
+        url (str base-url "/auth/reset-password")
         test-email "user@example.com"
         user (queries/create-user! (utils/db) {:email test-email
                                                :password "original-password"})
@@ -198,7 +198,7 @@
 
 (deftest test-post-reset-password-too-short
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/reset-password")
+        url (str base-url "/auth/reset-password")
         test-email "user@example.com"
         short-password "123"
         user (queries/create-user! (utils/db) {:email test-email
@@ -217,7 +217,7 @@
 
 (deftest test-post-reset-password-missing-fields
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/reset-password")
+        url (str base-url "/auth/reset-password")
         test-email "user@example.com"
         user (queries/create-user! (utils/db) {:email test-email
                                                :password "original-password"})

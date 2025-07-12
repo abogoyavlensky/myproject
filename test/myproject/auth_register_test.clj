@@ -17,7 +17,7 @@
 
 (deftest test-get-register-ok
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        response (http/get (str base-url "/register"))
+        response (http/get (str base-url "/auth/register"))
         body (utils/response->hickory response)]
     (is (= "Register"
            (->> body
@@ -30,7 +30,7 @@
                 (select/select (select/tag :input))
                 (map (comp :name :attrs))
                 (set))))
-    (is (= {:hx-post "/register"
+    (is (= {:hx-post "/auth/register"
             :hx-target "#form-register"
             :id "form-register"}
            (dissoc (->> body (select/select (select/tag :form)) first :attrs)
@@ -38,7 +38,7 @@
 
 (deftest test-post-register-ok
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/register")
+        url (str base-url "/auth/register")
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
@@ -53,7 +53,7 @@
 
 (deftest test-post-register-user-already-exists
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/register")
+        url (str base-url "/auth/register")
         test-email "existing@gmail.com"
         ; First, register a user to create the existing account
         _ (http/post url {:cookies (utils/session-cookies
@@ -81,7 +81,7 @@
 
 (deftest test-post-register-invalid-email
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/register")
+        url (str base-url "/auth/register")
         invalid-email "not-an-email"
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
@@ -102,7 +102,7 @@
 
 (deftest test-post-register-password-too-short
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/register")
+        url (str base-url "/auth/register")
         test-email "test@example.com"
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})

@@ -17,7 +17,7 @@
 
 (deftest test-get-forgot-password-ok
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        response (http/get (str base-url "/forgot-password"))
+        response (http/get (str base-url "/auth/forgot-password"))
         body (utils/response->hickory response)]
     (testing "Check page title and form structure"
       (is (= "Forgot your password?"
@@ -35,7 +35,7 @@
                   (set)))))
 
     (testing "Check form properties"
-      (is (= {:hx-post "/forgot-password"
+      (is (= {:hx-post "/auth/forgot-password"
               :hx-target "#form-forgot-password"
               :id "form-forgot-password"}
              (dissoc (->> body (select/select (select/tag :form)) first :attrs)
@@ -43,7 +43,7 @@
 
 (deftest test-get-forgot-password-already-logged-in
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/forgot-password")
+        url (str base-url "/auth/forgot-password")
         user (queries/create-user! (utils/db) {:email "user@example.com"
                                                :password "password123"})
         response (http/get url {:redirect-strategy :none
@@ -59,7 +59,7 @@
           test-email "user@example.com"
           _ (queries/create-user! (utils/db) {:email test-email
                                               :password "password123"})
-          url (str base-url "/forgot-password")
+          url (str base-url "/auth/forgot-password")
           response (http/post url {:cookies (utils/session-cookies
                                               {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                    :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
@@ -78,7 +78,7 @@
 (deftest test-post-forgot-password-nonexistent-email
   (bond/with-spy [handlers/send-email!]
     (let [base-url (reitit-extras/get-server-url (utils/server))
-          url (str base-url "/forgot-password")
+          url (str base-url "/auth/forgot-password")
           response (http/post url {:cookies (utils/session-cookies
                                               {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                    :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
@@ -95,7 +95,7 @@
 (deftest test-post-forgot-password-invalid-email
   (bond/with-spy [handlers/send-email!]
     (let [base-url (reitit-extras/get-server-url (utils/server))
-          url (str base-url "/forgot-password")
+          url (str base-url "/auth/forgot-password")
           invalid-email "not-an-email"
           response (http/post url {:cookies (utils/session-cookies
                                               {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
@@ -120,7 +120,7 @@
 
 (deftest test-post-forgot-password-missing-email
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/forgot-password")
+        url (str base-url "/auth/forgot-password")
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN}})
@@ -132,7 +132,7 @@
 
 (deftest test-post-forgot-password-empty-email
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/forgot-password")
+        url (str base-url "/auth/forgot-password")
         response (http/post url {:cookies (utils/session-cookies
                                             {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                  :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN}})

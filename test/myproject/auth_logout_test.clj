@@ -14,7 +14,7 @@
 
 (deftest test-post-logout
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        logout-url (str base-url "/logout")
+        logout-url (str base-url "/auth/logout")
         user (queries/create-user! (utils/db) {:email "user@example.com"
                                                :password "password123"})
         response (http/post logout-url {:cookies (utils/session-cookies
@@ -26,7 +26,7 @@
 
 (deftest test-post-logout-unauthenticated
   (let [base-url (reitit-extras/get-server-url (utils/server))
-        logout-url (str base-url "/logout")
+        logout-url (str base-url "/auth/logout")
         response (http/post logout-url {:cookies (utils/session-cookies
                                                    {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                                         :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN}})]
