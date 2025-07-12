@@ -1,6 +1,7 @@
 (ns myproject.views
   (:require [manifest-edn.core :as manifest]
-            [reitit-extras.core :as ext]))
+            [reitit-extras.core :as ext]
+            [myproject.routes :as-alias routes]))
 
 (defn base
   "Base component for html page."
@@ -53,7 +54,7 @@
    text])
 
 (defn home-page
-  [{:keys [user]}]
+  [{:keys [user router]}]
   (base
     ; ========= TODO: Update home page  ========================
     [:div
@@ -62,16 +63,16 @@
       (if (some? user)
         [:div {:class ["flex" "gap-4" "items-center" "justify-center"]}
          [:p {:class ["text-slate-900" "font-semibold" "mx-auto"]} (:email user)]
-         (button {:url "/account"
+         (button {:url (ext/get-route router ::routes/account)
                   :text "Account"})
          (button {:text "Logout"
                   :url "#"
-                  :props {:hx-post "/logout"
+                  :props {:hx-post (ext/get-route router ::routes/logout)
                           :hx-headers (ext/csrf-token-json)}})]
         [:div {:class ["flex" "gap-4"]}
-         (button {:url "/login"
+         (button {:url (ext/get-route router ::routes/login)
                   :text "Login"})
-         (button {:url "/register"
+         (button {:url (ext/get-route router ::routes/register)
                   :text "Register"})])]
      [:main {:class ["flex-grow" "flex" "items-center" "justify-center"]}
       [:div {:class ["container" "mx-auto" "px-4" "max-w-4xl" "text-center"]}

@@ -11,8 +11,9 @@
 
 (defn get-register
   [{router :reitit.core/router}]
-  (let [page (views/register-page {:router router})]
-    (ext/render-html page)))
+  (-> {:router router}
+      (views/register-page)
+      (ext/render-html)))
 
 (defn post-register
   [{:keys [context errors parameters params]
@@ -26,7 +27,7 @@
         (let [user (queries/create-user! (:db context) {:email email
                                                         :password password})]
           (-> (ext/render-html [:div])
-              (response/header "HX-Redirect" "/")
+              (response/header "HX-Redirect" (ext/get-route router ::routes/home))
               (assoc :session {:identity (dissoc user :password)})))
         ; TODO: refactor this to use a common error handler
         (catch SQLException e
@@ -44,8 +45,9 @@
 
 (defn get-login
   [{router :reitit.core/router}]
-  (let [page (views/login-page {:router router})]
-    (ext/render-html page)))
+  (-> {:router router}
+      (views/login-page)
+      (ext/render-html)))
 
 (defn post-login
   [{:keys [errors params parameters context]
@@ -65,29 +67,28 @@
                               {:valid false}))]
       (if (and (some? user) valid)
         (-> (ext/render-html [:div])
-            (response/header "HX-Redirect" "/")
+            (response/header "HX-Redirect" (ext/get-route router ::routes/home))
             (assoc :session {:identity (dissoc user :password)}))
         (ext/render-html (views/login-form {:router router
                                             :values params
                                             :errors {:common ["Invalid email or password"]}}))))))
 
 (defn post-logout
-  [{:keys [errors params parameters context]
-    router :reitit.core/router
-    :as request}]
+  [{router :reitit.core/router}]
   (-> (ext/render-html [:div])
-      (response/header "HX-Redirect" "/")
+      (response/header "HX-Redirect" (ext/get-route router ::routes/home))
       (assoc :session nil)))
 
 (defn get-account
   [request]
-  (ext/render-html (views/account-page {:user (:identity request)
-                                        :router (:reitit.core/router request)})))
+  (-> {:user (:identity request)
+       :router (:reitit.core/router request)}
+      (views/account-page)
+      (ext/render-html)))
 
 (defn post-change-password
   [{:keys [context errors parameters params identity]
-    router :reitit.core/router
-    :as request}]
+    router :reitit.core/router}]
   (if (seq errors)
     (ext/render-html (views/change-password-form {:user identity
                                                   :router router
@@ -119,16 +120,17 @@
 
 (defn get-forgot-password
   [{router :reitit.core/router}]
-  (let [page (views/forgot-password-page {:router router})]
-    (ext/render-html page)))
+  (-> {:router router}
+      (views/forgot-password-page)
+      (ext/render-html)))
 
 (defn send-email!
-  [{:keys [email reset-link]}]
-  ; TODO: send email instead of printing to console
-  (println (str "============================================\n"
-                "Password Reset Link for: " email "\n"
-                reset-link "\n"
-                "============================================\n")))
+ [{:keys [email reset-link]}]
+ ; TODO: send email instead of printing to console
+ (println (str "============================================\n"
+               "Password Reset Link for: " email "\n"
+               reset-link "\n"
+               "============================================\n")))
 
 (defn post-forgot-password
   [{:keys [errors params parameters context]
@@ -159,8 +161,7 @@
 
 (defn get-reset-password
   [{:keys [parameters context]
-    router :reitit.core/router
-    :as request}]
+    router :reitit.core/router}]
   (let [token (get-in parameters [:query :token])]
     (try
       (let [claims (jwt/unsign token (:session-secret-key (:options context)) {:alg :hs256})
@@ -174,8 +175,7 @@
 
 (defn post-reset-password
   [{:keys [errors params parameters context]
-    router :reitit.core/router
-    :as request}]
+    router :reitit.core/router}]
   (if (seq errors)
     (ext/render-html (views/reset-password-form {:router router
                                                  :values (dissoc params :token)
@@ -195,7 +195,7 @@
             (queries/update-password! (:db context) {:id user-id
                                                      :password-hash password-hash})
             (ext/render-html (views/password-reset-success-page {:router router})))
-          (catch Exception e
+          (catch Exception _e
             (ext/render-html (views/reset-password-form {:router router
                                                          :values (dissoc params :token)
                                                          :token (:token params)

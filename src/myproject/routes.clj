@@ -27,57 +27,58 @@
   (fn [{router :reitit.core/router
         :as request}]
     (if (buddy-auth/authenticated? request)
-      (response/redirect (ext/get-route router ::home-page))
+      (response/redirect (ext/get-route router ::home))
       (handler request))))
 
 (def routes
   (let [auth-backend (backends/session)]
-    [["/" {:name ::home-page
+    [["/" {:name ::home
            :middleware [[auth-middleware/wrap-authentication auth-backend]]
            :get {:handler handlers/home-handler}
            :responses {200 {:body string?}}}]
-     ["/health" {:name ::health-check
+     ["/health" {:name ::health
                  :get {:handler (fn [_] (response/response "OK"))}}]
-     ["/register" {:name ::register
-                   :middleware [[auth-middleware/wrap-authentication auth-backend]
-                                wrap-already-logged-in]
-                   :get {:handler auth-handlers/get-register}
-                   :post {:handler auth-handlers/post-register
-                          :parameters {:form [:map
-                                              [:email spec/Email]
-                                              [:password [:string {:min 8}]]]}
-                          :responses {200 {:body string?}}}}]
-     ["/login" {:name ::login
-                :middleware [[auth-middleware/wrap-authentication auth-backend]
-                             wrap-already-logged-in]
-                :get {:handler auth-handlers/get-login}
-                :post {:handler auth-handlers/post-login
-                       :parameters {:form [:map
-                                           [:email spec/Email]
-                                           [:password [:string {:min 1}]]]}
-                       :responses {200 {:body string?}}}}]
-     ["/forgot-password" {:name ::forgot-password
+     ["/auth"
+      ["/register" {:name ::register
+                    :middleware [[auth-middleware/wrap-authentication auth-backend]
+                                 wrap-already-logged-in]
+                    :get {:handler auth-handlers/get-register}
+                    :post {:handler auth-handlers/post-register
+                           :parameters {:form [:map
+                                               [:email spec/Email]
+                                               [:password [:string {:min 8}]]]}
+                           :responses {200 {:body string?}}}}]
+      ["/login" {:name ::login
+                 :middleware [[auth-middleware/wrap-authentication auth-backend]
+                              wrap-already-logged-in]
+                 :get {:handler auth-handlers/get-login}
+                 :post {:handler auth-handlers/post-login
+                        :parameters {:form [:map
+                                            [:email spec/Email]
+                                            [:password [:string {:min 1}]]]}
+                        :responses {200 {:body string?}}}}]
+      ["/logout" {:name ::logout
+                  :post {:handler auth-handlers/post-logout}}]
+      ["/forgot-password" {:name ::forgot-password
+                           :middleware [[auth-middleware/wrap-authentication auth-backend]
+                                        wrap-already-logged-in]
+                           :get {:handler auth-handlers/get-forgot-password}
+                           :post {:handler auth-handlers/post-forgot-password
+                                  :parameters {:form [:map
+                                                      [:email spec/Email]]}
+                                  :responses {200 {:body string?}}}}]
+      ["/reset-password" {:name ::reset-password
                           :middleware [[auth-middleware/wrap-authentication auth-backend]
                                        wrap-already-logged-in]
-                          :get {:handler auth-handlers/get-forgot-password}
-                          :post {:handler auth-handlers/post-forgot-password
+                          :get {:handler auth-handlers/get-reset-password
+                                :parameters {:query [:map
+                                                     [:token string?]]}}
+                          :post {:handler auth-handlers/post-reset-password
                                  :parameters {:form [:map
-                                                     [:email spec/Email]]}
-                                 :responses {200 {:body string?}}}}]
-     ["/reset-password" {:name ::reset-password
-                         :middleware [[auth-middleware/wrap-authentication auth-backend]
-                                      wrap-already-logged-in]
-                         :get {:handler auth-handlers/get-reset-password
-                               :parameters {:query [:map
-                                                    [:token string?]]}}
-                         :post {:handler auth-handlers/post-reset-password
-                                :parameters {:form [:map
-                                                    [:password [:string {:min 8}]]
-                                                    [:confirm-password [:string {:min 8}]]
-                                                    [:token string?]]}
-                                :responses {200 {:body string?}}}}]
-     ["/logout" {:name ::logout
-                 :post {:handler auth-handlers/post-logout}}]
+                                                     [:password [:string {:min 8}]]
+                                                     [:confirm-password [:string {:min 8}]]
+                                                     [:token string?]]}
+                                 :responses {200 {:body string?}}}}]]
      ["/account"
       ["" {:name ::account
            :middleware [[auth-middleware/wrap-authentication auth-backend]
