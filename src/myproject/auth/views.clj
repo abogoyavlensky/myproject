@@ -187,7 +187,8 @@
 (defn forgot-password-form
   [{:keys [router values errors email-sent?]}]
   (if email-sent?
-    [:p {:class ["text-center" "text-sm" "text-gray-500"]} "Check your email for the password reset link."]
+    [:p {:class ["text-center" "text-sm" "text-gray-500"]}
+     "If you are a registered user, please check your email for the password reset link that we've sent you."]
     [:form
      {:id "form-forgot-password"
       :class ["mx-auto" "max-w-lg"]

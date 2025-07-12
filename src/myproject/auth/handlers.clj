@@ -122,6 +122,14 @@
   (let [page (views/forgot-password-page {:router router})]
     (ext/render-html page)))
 
+(defn send-email!
+  [{:keys [email reset-link]}]
+  ; TODO: send email instead of printing to console
+  (println (str "============================================\n"
+                "Password Reset Link for: " email "\n"
+                reset-link "\n"
+                "============================================\n")))
+
 (defn post-forgot-password
   [{:keys [errors params parameters context]
     router :reitit.core/router
@@ -143,11 +151,8 @@
               reset-link (str (-> request :headers (get "host"))
                               (ext/get-route router ::routes/reset-password)
                               "?token=" token)]
-          ;; TODO: In production, send this via email instead of printing to console
-          (println (str "============================================\n"
-                        "Password Reset Link for: " email "\n"
-                        reset-link "\n"
-                        "============================================\n"))))
+          (send-email! {:email email
+                        :reset-link reset-link})))
       (ext/render-html
         (views/forgot-password-form {:router router
                                      :email-sent? true})))))

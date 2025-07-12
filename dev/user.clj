@@ -22,6 +22,10 @@
   []
   (ig-repl/halt))
 
+(defn refresh
+  []
+  (repl/refresh))
+
 (defn run-all-tests
   "Run tests for the project."
   ([]
@@ -39,6 +43,8 @@
   (keys state/system)
   ; Stop system
   (stop)
+  ; Refresh code, do not restart system
+  (refresh)
   ; Run all project tests
   (run-all-tests)
   ; Run specific test namespace

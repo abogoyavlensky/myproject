@@ -1,8 +1,10 @@
 (ns myproject.auth-forgot-password-test
   (:require [clj-http.client :as http]
+            [bond.james :as bond]
             [clojure.test :refer :all]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
+            [myproject.auth.handlers :as handlers]
             [myproject.auth.queries :as queries]
             [myproject.test-utils :as utils]
             [reitit-extras.tests :as reitit-extras]))
@@ -51,54 +53,70 @@
       (is (= 302 (:status response)))
       (is (= "/" (get-in response [:headers "Location"]))))))
 
-(deftest test-post-forgot-password-valid-email
-  (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/forgot-password")
-        test-email "user@example.com"
-        _ (queries/create-user! (utils/db) {:email test-email
-                                            :password "password123"})
-        response (http/post url {:cookies (utils/session-cookies
-                                            {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                               :email test-email}})]
+(deftest test-post-forgot-password-existing-email
+  (bond/with-spy [handlers/send-email!]
+    (let [base-url (reitit-extras/get-server-url (utils/server))
+          test-email "user@example.com"
+          _ (queries/create-user! (utils/db) {:email test-email
+                                              :password "password123"})
+          url (str base-url "/forgot-password")
+          response (http/post url {:cookies (utils/session-cookies
+                                              {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                                   :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                                 :email test-email}})]
 
-    (testing "Should show success message regardless of user existence"
-      (is (= 200 (:status response)))
-      (is (some? (->> (utils/response->hickory response)
-                      (select/select (select/find-in-text #"Check your email.*"))
-                      (first)))))))
+      (testing "Should show success message"
+        (is (= 200 (:status response)))
+        (is (some? (->> (utils/response->hickory response)
+                        (select/select (select/find-in-text #"check your email.*"))
+                        (first)))))
+
+      (testing "Send email to user for existing email"
+        (is (= 1 (-> handlers/send-email! bond/calls count)))))))
+
 
 (deftest test-post-forgot-password-nonexistent-email
-  (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/forgot-password")
-        response (http/post url {:cookies (utils/session-cookies
-                                            {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                               :email "nonexistent@example.com"}})]
-    (is (= 200 (:status response)))
-    (is (some? (->> (utils/response->hickory response)
-                    (select/select (select/find-in-text #"Check your email.*"))
-                    (first))))))
+  (bond/with-spy [handlers/send-email!]
+    (let [base-url (reitit-extras/get-server-url (utils/server))
+          url (str base-url "/forgot-password")
+          response (http/post url {:cookies (utils/session-cookies
+                                              {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                                   :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                                 :email "nonexistent@example.com"}})]
+      (testing "Should show success message even for nonexistent email"
+        (is (= 200 (:status response)))
+        (is (some? (->> (utils/response->hickory response)
+                        (select/select (select/find-in-text #"check your email.*"))
+                        (first)))))
+
+      (testing "Do not send email if user does not exist"
+        (is (= 0 (-> #'handlers/send-email! bond/calls count)))))))
 
 (deftest test-post-forgot-password-invalid-email
-  (let [base-url (reitit-extras/get-server-url (utils/server))
-        url (str base-url "/forgot-password")
-        invalid-email "not-an-email"
-        response (http/post url {:cookies (utils/session-cookies
-                                            {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
-                                 :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
-                                               :email invalid-email}})
-        body (utils/response->hickory response)
-        error-messages (select/select (select/class :error-message) body)
-        inputs (select/select (select/tag :input) body)]
-    (is (= 1 (count error-messages)))
-    (is (= 200 (:status response)))
-    (is (= ["Invalid email format"] (-> error-messages first :content)))
-    (is (= invalid-email (->> inputs
-                              (filter #(= "email" (get-in % [:attrs :name])))
-                              first
-                              :attrs
-                              :value)))))
+  (bond/with-spy [handlers/send-email!]
+    (let [base-url (reitit-extras/get-server-url (utils/server))
+          url (str base-url "/forgot-password")
+          invalid-email "not-an-email"
+          response (http/post url {:cookies (utils/session-cookies
+                                              {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
+                                   :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                                 :email invalid-email}})
+          body (utils/response->hickory response)
+          error-messages (select/select (select/class :error-message) body)
+          inputs (select/select (select/tag :input) body)]
+
+      (testing "Should return error for invalid email format"
+        (is (= 1 (count error-messages)))
+        (is (= 200 (:status response)))
+        (is (= ["Invalid email format"] (-> error-messages first :content)))
+        (is (= invalid-email (->> inputs
+                                  (filter #(= "email" (get-in % [:attrs :name])))
+                                  first
+                                  :attrs
+                                  :value))))
+
+      (testing "Do not send email if user does not exist"
+        (is (= 0 (-> #'handlers/send-email! bond/calls count)))))))
 
 (deftest test-post-forgot-password-missing-email
   (let [base-url (reitit-extras/get-server-url (utils/server))
