@@ -34,7 +34,7 @@
         :task (clojure "-X:test")}
 
   check {:doc "Run all code checks and tests"
-         :depends [fmt lint outdated test]}
+         :depends [fmt lint test]}
 
   css-watch {:doc "Rebuild css on file change in watch mode"
              ; Use "exec" to be able to run in the repl
