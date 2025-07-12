@@ -69,7 +69,6 @@
         response (http/get account-url {:cookies (utils/session-cookies {:identity user})})
         body (utils/response->hickory response)]
 
-
     (testing "Verify change password form exists"
       (is (= 200 (:status response)))
       (let [form (->> body

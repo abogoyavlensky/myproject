@@ -87,34 +87,35 @@
       (ext/render-html)))
 
 (defn post-change-password
-  [{:keys [context errors parameters params identity]
+  [{:keys [context errors parameters params]
+    user :identity
     router :reitit.core/router}]
   (if (seq errors)
-    (ext/render-html (views/change-password-form {:user identity
+    (ext/render-html (views/change-password-form {:user user
                                                   :router router
                                                   :values params
                                                   :errors (:humanized errors)}))
     (let [{:keys [current-password new-password confirm-new-password]} (:form parameters)
-          user (queries/get-user (:db context) (:email identity))
+          user (queries/get-user (:db context) (:email user))
           {:keys [valid]} (hashers/verify current-password (:password user) {:alg :bcrypt+sha512})]
       (cond
         (not valid)
-        (ext/render-html (views/change-password-form {:user identity
+        (ext/render-html (views/change-password-form {:user user
                                                       :router router
                                                       :values params
                                                       :errors {:current-password ["Current password is incorrect"]}}))
 
         (not= new-password confirm-new-password)
-        (ext/render-html (views/change-password-form {:user identity
+        (ext/render-html (views/change-password-form {:user user
                                                       :router router
                                                       :values params
                                                       :errors {:common ["New passwords do not match"]}}))
 
         :else
         (let [password-hash (hashers/derive new-password {:alg :bcrypt+sha512})]
-          (queries/update-password! (:db context) {:id (:id identity)
+          (queries/update-password! (:db context) {:id (:id user)
                                                    :password-hash password-hash})
-          (ext/render-html (views/change-password-form {:user identity
+          (ext/render-html (views/change-password-form {:user user
                                                         :router router
                                                         :password-changed? true})))))))
 
@@ -125,12 +126,12 @@
       (ext/render-html)))
 
 (defn send-email!
- [{:keys [email reset-link]}]
+  [{:keys [email reset-link]}]
  ; TODO: send email instead of printing to console
- (println (str "============================================\n"
-               "Password Reset Link for: " email "\n"
-               reset-link "\n"
-               "============================================\n")))
+  (println (str "============================================\n"
+                "Password Reset Link for: " email "\n"
+                reset-link "\n"
+                "============================================\n")))
 
 (defn post-forgot-password
   [{:keys [errors params parameters context]

@@ -1,7 +1,7 @@
 (ns myproject.views
   (:require [manifest-edn.core :as manifest]
-            [reitit-extras.core :as ext]
-            [myproject.routes :as-alias routes]))
+            [myproject.routes :as-alias routes]
+            [reitit-extras.core :as ext]))
 
 (defn base
   "Base component for html page."

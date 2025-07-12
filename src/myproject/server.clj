@@ -1,6 +1,5 @@
 (ns myproject.server
   (:require [clojure.tools.logging :as log]
-            [clojure.tools.logging :as log]
             [integrant-extras.core :as ig-extras]
             [integrant.core :as ig]
             [muuntaja.core :as muuntaja-core]
@@ -74,14 +73,13 @@
                   (fn [handler]
                     (fn
                       ([request]
-                       (try
-                         (let [coerced (try
-                                         (coercion/coerce-request coercers request)
-                                         (catch Exception e
-                                           {:errors (coercion/encode-error (ex-data e))}))]
-                           (if (contains? coerced :errors)
-                             (handler (impl/fast-assoc request :errors (:errors coerced)))
-                             (handler (impl/fast-assoc request :parameters coerced))))))
+                       (let [coerced (try
+                                       (coercion/coerce-request coercers request)
+                                       (catch Exception e
+                                         {:errors (coercion/encode-error (ex-data e))}))]
+                         (if (contains? coerced :errors)
+                           (handler (impl/fast-assoc request :errors (:errors coerced)))
+                           (handler (impl/fast-assoc request :parameters coerced)))))
                       ([request respond raise]
                        (let [coerced (try
                                        (coercion/coerce-request coercers request)
@@ -133,6 +131,7 @@
                              reitit-extras/exception-middleware
                              ; coerce request and response to spec
                              ring-coercion/coerce-exceptions-middleware
+                             ; TODO: remove!
                              ;ring-coercion/coerce-request-middleware
                              non-throwing-coerce-request-middleware
                              ring-coercion/coerce-response-middleware]}})

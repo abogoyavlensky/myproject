@@ -1,6 +1,6 @@
 (ns myproject.test-utils
-  (:require [integrant-extras.tests :as ig-extras]
-            [hickory.core :as hickory]
+  (:require [hickory.core :as hickory]
+            [integrant-extras.tests :as ig-extras]
             [myproject.db :as db]
             [myproject.server :as server]
             [reitit-extras.core :as reitit-extras]

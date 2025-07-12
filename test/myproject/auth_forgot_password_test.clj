@@ -1,6 +1,6 @@
 (ns myproject.auth-forgot-password-test
-  (:require [clj-http.client :as http]
-            [bond.james :as bond]
+  (:require [bond.james :as bond]
+            [clj-http.client :as http]
             [clojure.test :refer :all]
             [hickory.select :as select]
             [integrant-extras.tests :as ig-extras]
@@ -73,7 +73,6 @@
 
       (testing "Send email to user for existing email"
         (is (= 1 (-> handlers/send-email! bond/calls count)))))))
-
 
 (deftest test-post-forgot-password-nonexistent-email
   (bond/with-spy [handlers/send-email!]
