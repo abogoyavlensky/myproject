@@ -39,44 +39,39 @@
      ["/health" {:name ::health
                  :get {:handler (fn [_] (response/response "OK"))}}]
      ["/auth"
-      ["/register" {:name ::register
-                    :middleware [[auth-middleware/wrap-authentication auth-backend]
-                                 wrap-already-logged-in]
-                    :get {:handler auth-handlers/get-register}
-                    :post {:handler auth-handlers/post-register
-                           :parameters {:form [:map
-                                               [:email spec/Email]
-                                               [:password [:string {:min 8}]]]}
-                           :responses {200 {:body string?}}}}]
-      ["/login" {:name ::login
-                 :middleware [[auth-middleware/wrap-authentication auth-backend]
-                              wrap-already-logged-in]
-                 :get {:handler auth-handlers/get-login}
-                 :post {:handler auth-handlers/post-login
-                        :parameters {:form [:map
-                                            [:email spec/Email]
-                                            [:password [:string {:min 1}]]]}
-                        :responses {200 {:body string?}}}}]
-      ["/forgot-password" {:name ::forgot-password
-                           :middleware [[auth-middleware/wrap-authentication auth-backend]
-                                        wrap-already-logged-in]
-                           :get {:handler auth-handlers/get-forgot-password}
-                           :post {:handler auth-handlers/post-forgot-password
+      [""
+       {:middleware [[auth-middleware/wrap-authentication auth-backend]
+                     wrap-already-logged-in]}
+       ["/register" {:name ::register
+                     :get {:handler auth-handlers/get-register}
+                     :post {:handler auth-handlers/post-register
+                            :parameters {:form [:map
+                                                [:email spec/Email]
+                                                [:password [:string {:min 8}]]]}
+                            :responses {200 {:body string?}}}}]
+       ["/login" {:name ::login
+                  :get {:handler auth-handlers/get-login}
+                  :post {:handler auth-handlers/post-login
+                         :parameters {:form [:map
+                                             [:email spec/Email]
+                                             [:password [:string {:min 1}]]]}
+                         :responses {200 {:body string?}}}}]
+       ["/forgot-password" {:name ::forgot-password
+                            :get {:handler auth-handlers/get-forgot-password}
+                            :post {:handler auth-handlers/post-forgot-password
+                                   :parameters {:form [:map
+                                                       [:email spec/Email]]}
+                                   :responses {200 {:body string?}}}}]
+       ["/reset-password" {:name ::reset-password
+                           :get {:handler auth-handlers/get-reset-password
+                                 :parameters {:query [:map
+                                                      [:token string?]]}}
+                           :post {:handler auth-handlers/post-reset-password
                                   :parameters {:form [:map
-                                                      [:email spec/Email]]}
-                                  :responses {200 {:body string?}}}}]
-      ["/reset-password" {:name ::reset-password
-                          :middleware [[auth-middleware/wrap-authentication auth-backend]
-                                       wrap-already-logged-in]
-                          :get {:handler auth-handlers/get-reset-password
-                                :parameters {:query [:map
-                                                     [:token string?]]}}
-                          :post {:handler auth-handlers/post-reset-password
-                                 :parameters {:form [:map
-                                                     [:password [:string {:min 8}]]
-                                                     [:confirm-password [:string {:min 8}]]
-                                                     [:token string?]]}
-                                 :responses {200 {:body string?}}}}]
+                                                      [:password [:string {:min 8}]]
+                                                      [:confirm-password [:string {:min 8}]]
+                                                      [:token string?]]}
+                                  :responses {200 {:body string?}}}}]]
       ["/logout" {:name ::logout
                   :middleware [[auth-middleware/wrap-authentication auth-backend]]
                   :post {:handler auth-handlers/post-logout}}]]
