@@ -25,6 +25,13 @@
   (-> (redirect-response router route-name)
       (assoc :session session-data)))
 
+(defn build-reset-url
+  "Build a password reset URL with token"
+  [request router token]
+  (str (-> request :headers (get "host"))
+       (ext/get-route router ::routes/reset-password)
+       "?token=" token))
+
 ; Password utilities
 (defn verify-password
   "Safely verify a password, returning {:valid boolean}"
@@ -57,12 +64,14 @@
       {:valid false})))
 
 (defn get-register
+  "Display the user registration form"
   [{router :reitit.core/router}]
   (-> {:router router}
       (views/register-page)
       (ext/render-html)))
 
 (defn post-register
+  "Process user registration form submission"
   [{:keys [context errors parameters params]
     router :reitit.core/router}]
   (if (some? errors)
@@ -91,12 +100,14 @@
               (ext/render-html)))))))
 
 (defn get-login
+  "Display the user login form"
   [{router :reitit.core/router}]
   (-> {:router router}
       (views/login-page)
       (ext/render-html)))
 
 (defn post-login
+  "Process user login form submission"
   [{:keys [errors params parameters context]
     router :reitit.core/router}]
   (if (some? errors)
@@ -117,10 +128,12 @@
             (ext/render-html))))))
 
 (defn post-logout
+  "Log out the current user and redirect to home"
   [{router :reitit.core/router}]
   (redirect-with-session router ::routes/home nil))
 
 (defn get-account
+  "Display the user account page"
   [request]
   (-> {:user (:identity request)
        :router (:reitit.core/router request)}
@@ -128,6 +141,7 @@
       (ext/render-html)))
 
 (defn post-change-password
+  "Process password change form submission"
   [{:keys [context errors parameters params]
     user :identity
     router :reitit.core/router}]
@@ -164,12 +178,14 @@
               (ext/render-html)))))))
 
 (defn get-forgot-password
+  "Display the forgot password form"
   [{router :reitit.core/router}]
   (-> {:router router}
       (views/forgot-password-page)
       (ext/render-html)))
 
 (defn send-email!
+  "Send password reset email (currently prints to console)"
   [{:keys [email reset-link]}]
   ; TODO: send email instead of printing to console
   (println (str "============================================\n"
@@ -178,6 +194,7 @@
                 "============================================\n")))
 
 (defn post-forgot-password
+  "Process forgot password form submission and send reset email"
   [{:keys [errors params parameters context]
     router :reitit.core/router
     :as request}]
@@ -191,9 +208,7 @@
           user (queries/get-user (:db context) email)]
       (when (some? user)
         (let [token (create-reset-token (:id user) email (:session-secret-key (:options context)))
-              reset-link (str (-> request :headers (get "host"))
-                              (ext/get-route router ::routes/reset-password)
-                              "?token=" token)]
+              reset-link (build-reset-url request router token)]
           (send-email! {:email email
                         :reset-link reset-link})))
       (-> {:router router
@@ -202,6 +217,7 @@
           (ext/render-html)))))
 
 (defn get-reset-password
+  "Display the password reset form with token validation"
   [{:keys [parameters context]
     router :reitit.core/router}]
   (let [token (get-in parameters [:query :token])
@@ -214,6 +230,7 @@
           (response/status 400)))))
 
 (defn post-reset-password
+  "Process password reset form submission"
   [{:keys [errors params parameters context]
     router :reitit.core/router}]
   (if (seq errors)
