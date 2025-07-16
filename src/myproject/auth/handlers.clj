@@ -25,11 +25,6 @@
   (-> (redirect-response router route-name)
       (assoc :session session-data)))
 
-(defn form-error-response
-  "Render a form with validation errors"
-  [view-fn data]
-  (ext/render-html (view-fn data)))
-
 ; Password utilities
 (defn verify-password
   "Safely verify a password, returning {:valid boolean}"
@@ -71,9 +66,11 @@
   [{:keys [context errors parameters params]
     router :reitit.core/router}]
   (if (some? errors)
-    (form-error-response views/register-form {:router router
-                                              :values params
-                                              :errors (:humanized errors)})
+    (-> {:router router
+         :values params
+         :errors (:humanized errors)}
+        (views/register-form)
+        (ext/render-html))
     (let [{:keys [email password]} (:form parameters)
           base-data {:router router
                      :values params}]
@@ -85,10 +82,13 @@
           (let [error-msg (if (re-find #"UNIQUE constraint failed" (ex-message e))
                             "user already exists"
                             "unexpected database error while creating account")]
-            (form-error-response views/register-form (assoc base-data :errors {:email [error-msg]}))))
+            (-> (assoc base-data :errors {:email [error-msg]})
+                (views/register-form)
+                (ext/render-html))))
         (catch Exception _e
-          (form-error-response views/register-form
-                               (assoc base-data :errors {:common ["unexpected server error"]})))))))
+          (-> (assoc base-data :errors {:common ["unexpected server error"]})
+              (views/register-form)
+              (ext/render-html)))))))
 
 (defn get-login
   [{router :reitit.core/router}]
@@ -100,17 +100,21 @@
   [{:keys [errors params parameters context]
     router :reitit.core/router}]
   (if (some? errors)
-    (form-error-response views/login-form {:router router
-                                           :values params
-                                           :errors (:humanized errors)})
+    (-> {:router router
+         :values params
+         :errors (:humanized errors)}
+        (views/login-form)
+        (ext/render-html))
     (let [{:keys [email password]} (:form parameters)
           user (queries/get-user (:db context) email)
           {:keys [valid]} (verify-password password (:password user))]
       (if (and (some? user) valid)
         (redirect-with-session router ::routes/home {:identity (dissoc user :password)})
-        (form-error-response views/login-form {:router router
-                                               :values params
-                                               :errors {:common ["Invalid email or password"]}})))))
+        (-> {:router router
+             :values params
+             :errors {:common ["Invalid email or password"]}}
+            (views/login-form)
+            (ext/render-html))))))
 
 (defn post-logout
   [{router :reitit.core/router}]
@@ -128,10 +132,12 @@
     user :identity
     router :reitit.core/router}]
   (if (seq errors)
-    (form-error-response views/change-password-form {:user user
-                                                     :router router
-                                                     :values params
-                                                     :errors (:humanized errors)})
+    (-> {:user user
+         :router router
+         :values params
+         :errors (:humanized errors)}
+        (views/change-password-form)
+        (ext/render-html))
     (let [{:keys [current-password new-password confirm-new-password]} (:form parameters)
           user (queries/get-user (:db context) (:email user))
           {:keys [valid]} (verify-password current-password (:password user))
@@ -140,19 +146,22 @@
                      :values params}]
       (cond
         (not valid)
-        (form-error-response views/change-password-form
-                             (assoc base-data :errors {:current-password ["Current password is incorrect"]}))
+        (-> (assoc base-data :errors {:current-password ["Current password is incorrect"]})
+            (views/change-password-form)
+            (ext/render-html))
 
         (not= new-password confirm-new-password)
-        (form-error-response views/change-password-form
-                             (assoc base-data :errors {:common ["New passwords do not match"]}))
+        (-> (assoc base-data :errors {:common ["New passwords do not match"]})
+            (views/change-password-form)
+            (ext/render-html))
 
         :else
         (let [password-hash (hashers/derive new-password {:alg PASSWORD-HASH-ALGORITHM})]
           (queries/update-password! (:db context) {:id (:id user)
                                                    :password-hash password-hash})
-          (form-error-response views/change-password-form
-                               (assoc base-data :password-changed? true)))))))
+          (-> (assoc base-data :password-changed? true)
+              (views/change-password-form)
+              (ext/render-html)))))))
 
 (defn get-forgot-password
   [{router :reitit.core/router}]
@@ -173,9 +182,11 @@
     router :reitit.core/router
     :as request}]
   (if (seq errors)
-    (form-error-response views/forgot-password-form {:router router
-                                                     :values params
-                                                     :errors (:humanized errors)})
+    (-> {:router router
+         :values params
+         :errors (:humanized errors)}
+        (views/forgot-password-form)
+        (ext/render-html))
     (let [{:keys [email]} (:form parameters)
           user (queries/get-user (:db context) email)]
       (when (some? user)
@@ -185,8 +196,10 @@
                               "?token=" token)]
           (send-email! {:email email
                         :reset-link reset-link})))
-      (form-error-response views/forgot-password-form {:router router
-                                                       :email-sent? true}))))
+      (-> {:router router
+           :email-sent? true}
+          (views/forgot-password-form)
+          (ext/render-html)))))
 
 (defn get-reset-password
   [{:keys [parameters context]
@@ -204,17 +217,20 @@
   [{:keys [errors params parameters context]
     router :reitit.core/router}]
   (if (seq errors)
-    (form-error-response views/reset-password-form {:router router
-                                                    :values (dissoc params :token)
-                                                    :token (:token params)
-                                                    :errors (:humanized errors)})
+    (-> {:router router
+         :values (dissoc params :token)
+         :token (:token params)
+         :errors (:humanized errors)}
+        (views/reset-password-form)
+        (ext/render-html))
     (let [{:keys [password confirm-password token]} (:form parameters)
           base-data {:router router
                      :values (dissoc params :token)
                      :token token}]
       (if (not= password confirm-password)
-        (form-error-response views/reset-password-form
-                             (assoc base-data :errors {:common ["Passwords do not match"]}))
+        (-> (assoc base-data :errors {:common ["Passwords do not match"]})
+            (views/reset-password-form)
+            (ext/render-html))
         (let [{:keys [valid claims]} (verify-reset-token token (:session-secret-key (:options context)))]
           (if valid
             (let [user-id (:sub claims)
@@ -222,5 +238,6 @@
               (queries/update-password! (:db context) {:id user-id
                                                        :password-hash password-hash})
               (ext/render-html (views/password-reset-success-page {:router router})))
-            (form-error-response views/reset-password-form
-                                 (assoc base-data :errors {:common ["Invalid or expired token"]}))))))))
+            (-> (assoc base-data :errors {:common ["Invalid or expired token"]})
+                (views/reset-password-form)
+                (ext/render-html))))))))
