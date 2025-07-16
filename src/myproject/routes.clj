@@ -57,8 +57,6 @@
                                             [:email spec/Email]
                                             [:password [:string {:min 1}]]]}
                         :responses {200 {:body string?}}}}]
-      ["/logout" {:name ::logout
-                  :post {:handler auth-handlers/post-logout}}]
       ["/forgot-password" {:name ::forgot-password
                            :middleware [[auth-middleware/wrap-authentication auth-backend]
                                         wrap-already-logged-in]
@@ -78,16 +76,17 @@
                                                      [:password [:string {:min 8}]]
                                                      [:confirm-password [:string {:min 8}]]
                                                      [:token string?]]}
-                                 :responses {200 {:body string?}}}}]]
+                                 :responses {200 {:body string?}}}}]
+      ["/logout" {:name ::logout
+                  :middleware [[auth-middleware/wrap-authentication auth-backend]]
+                  :post {:handler auth-handlers/post-logout}}]]
      ["/account"
+      {:middleware [[auth-middleware/wrap-authentication auth-backend]
+                    wrap-login-required]}
       ["" {:name ::account
-           :middleware [[auth-middleware/wrap-authentication auth-backend]
-                        wrap-login-required]
            :get {:handler auth-handlers/get-account
                  :responses {200 {:body string?}}}}]
       ["/change-password" {:name ::change-password
-                           :middleware [[auth-middleware/wrap-authentication auth-backend]
-                                        wrap-login-required]
                            :post {:handler auth-handlers/post-change-password
                                   :parameters {:form [:map
                                                       [:current-password [:string {:min 1}]]

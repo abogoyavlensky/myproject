@@ -10,6 +10,7 @@
 
 (def ^:const CSRF-TOKEN-FORM-KEY :__anti-forgery-token)
 (def ^:const CSRF-TOKEN-SESSION-KEY :ring.middleware.anti-forgery/anti-forgery-token)
+(def ^:const CSRF-TOKEN-HEADER "X-CSRF-Token")
 (def ^:const TEST-CSRF-TOKEN "test-csrf-token")
 (def ^:const TEST-SECRET-KEY "test-secret-key")
 
@@ -46,6 +47,15 @@
                    :path "/"
                    :http-only true
                    :secure true}})
+
+(defn decrypt-session-from-cookie
+  "Decrypt session data from a cookie value using the server's session store."
+  [session-value]
+  (when session-value
+    (let [store (ring-session-cookie/cookie-store
+                  {:key (reitit-extras/string->16-byte-array TEST-SECRET-KEY)})
+          decoded-value (codec/form-decode session-value)]
+      (ring-session-store/read-session store decoded-value))))
 
 (defn response->hickory
   "Convert a Ring response body to a Hickory document."

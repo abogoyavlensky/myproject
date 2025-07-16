@@ -177,6 +177,7 @@
         change-password-url (str base-url "/account/change-password")
         response (http/post change-password-url
                             {:redirect-strategy :none
+                             ; no auth session in cookies
                              :cookies (utils/session-cookies
                                         {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN})
                              :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
