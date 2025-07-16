@@ -226,18 +226,22 @@
     (let [{:keys [password confirm-password token]} (:form parameters)
           base-data {:router router
                      :values (dissoc params :token)
-                     :token token}]
-      (if (not= password confirm-password)
+                     :token token}
+          {:keys [valid claims]} (verify-reset-token token (:session-secret-key (:options context)))]
+      (cond
+        (not valid)
+        (-> (assoc base-data :errors {:common ["Invalid or expired token"]})
+            (views/reset-password-form)
+            (ext/render-html))
+
+        (not= password confirm-password)
         (-> (assoc base-data :errors {:common ["Passwords do not match"]})
             (views/reset-password-form)
             (ext/render-html))
-        (let [{:keys [valid claims]} (verify-reset-token token (:session-secret-key (:options context)))]
-          (if valid
-            (let [user-id (:sub claims)
-                  password-hash (hashers/derive password {:alg PASSWORD-HASH-ALGORITHM})]
-              (queries/update-password! (:db context) {:id user-id
-                                                       :password-hash password-hash})
-              (ext/render-html (views/password-reset-success-page {:router router})))
-            (-> (assoc base-data :errors {:common ["Invalid or expired token"]})
-                (views/reset-password-form)
-                (ext/render-html))))))))
+
+        :else
+        (let [user-id (:sub claims)
+              password-hash (hashers/derive password {:alg PASSWORD-HASH-ALGORITHM})]
+          (queries/update-password! (:db context) {:id user-id
+                                                   :password-hash password-hash})
+          (ext/render-html (views/password-reset-success-page {:router router})))))))

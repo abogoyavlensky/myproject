@@ -3,5 +3,5 @@
 # Development rules
 
 - Always use SINGLE semicolon ; for comments in Clojure
-- For linting run: bb lint
-- For testing run: bb test
+- After changes run linting with: bb lint
+- After changes run all tests with: bb test
