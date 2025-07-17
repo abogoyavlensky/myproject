@@ -131,8 +131,6 @@
                              reitit-extras/exception-middleware
                              ; coerce request and response to spec
                              ring-coercion/coerce-exceptions-middleware
-                             ; TODO: remove!
-                             ;ring-coercion/coerce-request-middleware
                              non-throwing-coerce-request-middleware
                              ring-coercion/coerce-response-middleware]}})
       (ring/routes
