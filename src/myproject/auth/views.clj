@@ -233,40 +233,43 @@
       (forgot-password-form args)]]))
 
 (defn reset-password-form
-  [{:keys [router values errors token]}]
-  [:form
-   {:id "form-reset-password"
-    :class ["mx-auto" "max-w-lg"]
-    :hx-post (ext/get-route router ::routes/reset-password)
-    :hx-target "#form-reset-password"
-    :hx-swap "outerHTML"}
-   (ext/csrf-token-html)
-   [:input {:type "hidden"
-            :name "token"
-            :value token}]
-   [:div {:class ["flex" "flex-col" "gap-4" "p-4" "md:p-8"]}
-    (form-input {:input-name "password"
-                 :input-label "New password"
-                 :input-type "password"
-                 :input-value (:password values)
-                 :errors (:password errors)
-                 :required true
-                 :props {:autocomplete "new-password"}})
-    (form-input {:input-name "confirm-password"
-                 :input-label "Confirm password"
-                 :input-type "password"
-                 :input-value (:confirm-password values)
-                 :errors (:confirm-password errors)
-                 :required true
-                 :props {:autocomplete "new-password"}})
-    (common-errors (:common errors))
-    [:button
-     {:class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm"
-              "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition"
-              "duration-100" "hover:bg-gray-700" "focus-visible:ring" "active:bg-gray-600"
-              "md:text-base" "cursor-pointer"]
-      :type "submit"}
-     "Reset Password"]]])
+  [{:keys [router values errors token email]}]
+  [:div {:id "form-reset-password"
+         :class ["mx-auto" "max-w-screen-2xl" "px-4" "md:px-8"]}
+   [:h2 {:class ["mb-4" "text-center" "text-2xl" "font-bold" "text-gray-800" "md:mb-8" "lg:text-3xl"]} "Reset Your Password"]
+   [:p {:class ["text-center" "text-sm" "text-gray-500" "mb-4"]} "Enter a new password for " [:strong email]]
+   [:form
+    {:class ["mx-auto" "max-w-lg"]
+     :hx-post (ext/get-route router ::routes/reset-password)
+     :hx-target "#form-reset-password"
+     :hx-swap "outerHTML"}
+    (ext/csrf-token-html)
+    [:input {:type "hidden"
+             :name "token"
+             :value token}]
+    [:div {:class ["flex" "flex-col" "gap-4" "p-4" "md:p-8"]}
+     (form-input {:input-name "password"
+                  :input-label "New password"
+                  :input-type "password"
+                  :input-value (:password values)
+                  :errors (:password errors)
+                  :required true
+                  :props {:autocomplete "new-password"}})
+     (form-input {:input-name "confirm-password"
+                  :input-label "Confirm password"
+                  :input-type "password"
+                  :input-value (:confirm-password values)
+                  :errors (:confirm-password errors)
+                  :required true
+                  :props {:autocomplete "new-password"}})
+     (common-errors (:common errors))
+     [:button
+      {:class ["block" "rounded-lg" "bg-gray-800" "px-8" "py-3" "text-center" "text-sm"
+               "font-semibold" "text-white" "outline-none" "ring-gray-300" "transition"
+               "duration-100" "hover:bg-gray-700" "focus-visible:ring" "active:bg-gray-600"
+               "md:text-base" "cursor-pointer"]
+       :type "submit"}
+      "Reset Password"]]]])
 
 (defn reset-password-page
   [{:keys [router token email]}]
@@ -276,11 +279,9 @@
       [:div {:class ["flex" "gap-4"]}
        (views/button {:url (ext/get-route router ::routes/home)
                       :text "<- Home page"})]]
-     [:div {:class ["mx-auto" "max-w-screen-2xl" "px-4" "md:px-8"]}
-      [:h2 {:class ["mb-4" "text-center" "text-2xl" "font-bold" "text-gray-800" "md:mb-8" "lg:text-3xl"]} "Reset Your Password"]
-      [:p {:class ["text-center" "text-sm" "text-gray-500" "mb-4"]} "Enter a new password for " [:strong email]]
-      (reset-password-form {:router router
-                            :token token})]]))
+     (reset-password-form {:router router
+                           :token token
+                           :email email})]))
 
 (defn invalid-reset-token-page
   [{:keys [router]}]
