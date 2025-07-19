@@ -160,7 +160,8 @@
                      :values params}]
       (cond
         (not valid)
-        (-> (assoc base-data :errors {:current-password ["Current password is incorrect"]})
+        (-> base-data
+            (assoc :errors {:current-password ["Current password is incorrect"]})
             (views/change-password-form)
             (ext/render-html))
 
@@ -169,11 +170,17 @@
             (views/change-password-form)
             (ext/render-html))
 
+        (= current-password new-password)
+        (-> (assoc base-data :errors {:common ["New password must be different from current password"]})
+            (views/change-password-form)
+            (ext/render-html))
+
         :else
         (let [password-hash (hashers/derive new-password {:alg PASSWORD-HASH-ALGORITHM})]
           (queries/update-password! (:db context) {:id (:id user)
                                                    :password-hash password-hash})
           (-> (assoc base-data :password-changed? true)
+              (dissoc :values)
               (views/change-password-form)
               (ext/render-html)))))))
 
