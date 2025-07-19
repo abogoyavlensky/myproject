@@ -172,6 +172,27 @@
     (is (= 200 (:status response)))
     (is (pos? (count error-messages)))))
 
+(deftest test-post-change-password-same-as-current
+  (let [base-url (reitit-extras/get-server-url (utils/server))
+        current-password "same-password"
+        user (queries/create-user! (utils/db) {:email "user@example.com"
+                                               :password current-password})
+        change-password-url (str base-url "/account/change-password")
+        response (http/post change-password-url
+                            {:cookies (utils/session-cookies
+                                        {utils/CSRF-TOKEN-SESSION-KEY utils/TEST-CSRF-TOKEN
+                                         :identity user})
+                             :form-params {utils/CSRF-TOKEN-FORM-KEY utils/TEST-CSRF-TOKEN
+                                           :current-password current-password
+                                           :new-password current-password
+                                           :confirm-new-password current-password}})
+        error-messages (->> response
+                            (utils/response->hickory)
+                            (select/select (select/class :error-message)))]
+    (is (= 200 (:status response)))
+    (is (= 1 (count error-messages)))
+    (is (= ["New password must be different from current password"] (-> error-messages first :content)))))
+
 (deftest test-post-change-password-unauthenticated
   (let [base-url (reitit-extras/get-server-url (utils/server))
         change-password-url (str base-url "/account/change-password")
